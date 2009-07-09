@@ -95,9 +95,8 @@
         <property name="local.maven"                    value="${env.HOME}/.m2"/>
         <property name="local.url"                      value="file:${local.maven}"/>
         <property name="full.jar"                       value="dist/GlassFish_Common_APIs.jar"/>
-        <property name="bundle.name"                    value="glassfish-common-api"/>
         <property name="groupId"                        value="org.glassfish.external"/>
-        <property name="artifactId"                     value="common-api"/>
+        <property name="artifactId"                     value="common-monitoring-api"/>
     </target>
     
     <target name="clean">
@@ -122,7 +121,7 @@
 
     <target name="make-source-bundle" depends="project-init">
         <mkdir dir="dist/bundles"/> 
-        <jar jarfile="dist/bundles/${bundle.name}-sources.jar" duplicate="fail">
+        <jar jarfile="dist/bundles/${artifactId}-sources.jar" duplicate="fail">
             <fileset dir="src">
                 <include name="org/glassfish/api/statistics/*.java"/>
                 <include name="org/glassfish/api/statistics/impl/*.java"/>
@@ -138,7 +137,7 @@
     </target>
 
     <target name="make-bundles" depends="project-init,make-source-bundle,make-bnd-properties">
-        <make-bundle file="${bundle.name}"/>
+        <make-bundle file="${artifactId}"/>
     </target>
 
     <target name="increment-build-version" depends="project-init">
@@ -173,7 +172,7 @@
     </macrodef>
 
     <target name="make-pom-file" depends="project-init">
-        <make-file module="${bundle.name}" description="The GlassFish Common APIs for monitoring"/>
+        <make-file module="${artifactId}" description="The GlassFish Common APIs for monitoring"/>
     </target>
 
     <target name="mavenize" depends="project-init" description="initialize maven ">
@@ -203,9 +202,9 @@
         <attribute name="destination"/>
         <sequential>
             <echo message="Releasing modules with version ${version} to @{destination}"/>
-            <push-to-maven destination="@{destination}" module="glassfish-common-api" 
+            <push-to-maven destination="@{destination}" module="${artifactId}" 
                 description="GlassFish Common APIs"/>
-            <push-to-maven destination="@{destination}" module="glassfish-common-api-sources" 
+            <push-to-maven destination="@{destination}" module="${artifactId}-sources" 
                 description="GlassFish Common API source code"/>
         </sequential>
     </macrodef>

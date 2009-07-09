@@ -39,10 +39,10 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.glassfish.external</groupId>
-    <artifactId>glassfish-common-api-sources</artifactId>
+    <artifactId>common-monitoring-api-sources</artifactId>
     <packaging>jar</packaging>
     <version>3.0.0-b001</version>
-    <name>glassfish-common-api-sources</name>
+    <name>common-monitoring-api-sources</name>
     <description>GlassFish Common API source code</description>
     <url>http://kenai.com/hg/gmbal~gf_common</url>
     <developers>
