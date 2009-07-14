@@ -34,37 +34,19 @@
  * holder.
  */
 
-package org.glassfish.api.statistics;
+package org.glassfish.external.statistics;
 
 import org.glassfish.gmbal.ManagedAttribute;
 import org.glassfish.gmbal.ManagedData;
 
 /**
- * Specifies standard timing measurements. 
+ * Specifies standard count measurements. 
  */
 @ManagedData
-public interface TimeStatistic extends Statistic {
+public interface CountStatistic extends Statistic {
     /**
-     * Number of times the operation was invoked since the beginning of this measurement. 
+     * The count since the last reset. 
      */
     @ManagedAttribute
     long getCount();
-
-    /**
-     * The maximum amount of time taken to complete one invocation of this operation since the beginning of this measurement. 
-     */
-    @ManagedAttribute
-    long getMaxTime();
-
-    /**
-     * The minimum amount of time taken to complete one invocation of this operation since the beginning of this measurement. 
-     */
-    @ManagedAttribute
-    long getMinTime();
-
-    /**
-     * This is the sum total of time taken to complete every invocation of this operation since the beginning of this measurement. Dividing totalTime by count will give you the average execution time for this operation. 
-     */
-    @ManagedAttribute
-    long getTotalTime();
 }

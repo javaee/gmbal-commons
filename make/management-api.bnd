@@ -1,1 +1,1 @@
-Export-Package: org.glassfish.probe.provider.annotations,org.glassfish.probe.provider,org.glassfish.api.statistics,org.glassfish.api.statistics.impl
+Export-Package: org.glassfish.external.probe.provider.annotations,org.glassfish.external.probe.provider,org.glassfish.external.statistics,org.glassfish.external.statistics.impl, org.glassfish.external.amx

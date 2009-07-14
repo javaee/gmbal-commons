@@ -34,103 +34,105 @@
  * holder.
  */
 
-package org.glassfish.api.statistics.impl;
-import org.glassfish.api.statistics.BoundedRangeStatistic;
+package org.glassfish.external.statistics.impl;
+import org.glassfish.external.statistics.TimeStatistic;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.lang.reflect.*;
 
-
 /** 
  * @author Sreenivas Munnangi
  */
-public final class BoundedRangeStatisticImpl extends StatisticImpl 
-    implements BoundedRangeStatistic, InvocationHandler {
+public class TimeStatisticImpl extends StatisticImpl 
+    implements TimeStatistic, InvocationHandler {
     
-    private AtomicLong lowerBound = new AtomicLong(0L);
-    private AtomicLong upperBound = new AtomicLong(0L);
-    private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong lowWaterMark = new AtomicLong(Long.MIN_VALUE);
-    
-    private BoundedRangeStatistic bs = (BoundedRangeStatistic) Proxy.newProxyInstance(
-            BoundedRangeStatistic.class.getClassLoader(),
-            new Class[] { BoundedRangeStatistic.class },
+    private AtomicLong count = new AtomicLong(Long.MIN_VALUE);
+    private final long timeNow = System.currentTimeMillis();
+    private AtomicLong maxTime = new AtomicLong(timeNow);
+    private AtomicLong minTime = new AtomicLong(timeNow);
+    private AtomicLong totTime = new AtomicLong(0L);
+
+    private TimeStatistic ts = (TimeStatistic) Proxy.newProxyInstance(
+            TimeStatistic.class.getClassLoader(),
+            new Class[] { TimeStatistic.class },
             this);
 
-    public String toString() {
+    public final String toString() {
         return super.toString() + NEWLINE + 
-            "Current: " + getCurrent() + NEWLINE +
-            "LowWaterMark: " + getLowWaterMark() + NEWLINE +
-            "HighWaterMark: " + getHighWaterMark() + NEWLINE +
-            "LowerBound: " + getLowerBound() + NEWLINE +
-            "UpperBound: " + getUpperBound();
+            "Count: " + getCount() + NEWLINE +
+            "MinTime: " + getMinTime() + NEWLINE +
+            "MaxTime: " + getMaxTime() + NEWLINE +
+            "TotalTime: " + getTotalTime();
     }
 
-
-    public BoundedRangeStatisticImpl(long curVal, long highMark, long lowMark,
-                                     long upper, long lower, String name,
-                                     String unit, String desc, long startTime,
-                                     long sampleTime) {
+    public TimeStatisticImpl(long counter, long maximumTime, long minimumTime,
+                             long totalTime, String name, String unit, 
+                             String desc, long startTime, long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        currentVal.set(curVal);
-        highWaterMark.set(highMark);
-        lowWaterMark.set(lowMark);
-        upperBound.set(upper);
-        lowerBound.set(lower);
+        count.set(counter);
+        maxTime.set(maximumTime);
+        minTime.set(minimumTime);
+        totTime.set(totalTime);
+    }
+
+    public synchronized TimeStatistic getStatistic() {
+        return ts;
     }
     
-    public synchronized BoundedRangeStatistic getStatistic() {
-        return bs;
-    }
-
     public synchronized Map getStaticAsMap() {
         Map m = super.getStaticAsMap();
-        m.put("current", getCurrent());
-        m.put("lowerbound", getLowerBound());
-        m.put("upperbound", getUpperBound());
-        m.put("lowwatermark", getLowWaterMark());
-        m.put("highwatermark", getHighWaterMark());
+        m.put("count", getCount());
+        m.put("maxtime", getMaxTime());
+        m.put("mintime", getMinTime());
+        m.put("totaltime", getTotalTime());
         return m;
     }
 
-    public long getCurrent() {
-        return currentVal.get();
-    }
-    
-    public void setCurrent(long curVal) {
-        currentVal.set(curVal);
-    }
-    public long getHighWaterMark() {
-        return highWaterMark.get();
-    }
-    
-    public void setHighWaterMark(long highMark) {
-        highWaterMark.set(highMark);
-    }
-    public long getLowWaterMark() {
-        return lowWaterMark.get();
-    }
-    
-    public void setLowWaterMark(long lowMark) {
-        lowWaterMark.set(lowMark);
-    }
-    public long getLowerBound() {
-        return lowerBound.get();
-    }
-    
-    public void setLowerBound(long lower) {
-        lowerBound.set(lower);
-    }
     /**
-     * Returns the highest possible value, that this statistic is permitted to attain.
+     * Returns the number of times an operation was invoked 
      */
-    public long getUpperBound() {
-        return upperBound.get();
+    public long getCount() {
+        return count.get();
     }
-	
-    public void setUpperBound(long upper) {
-        upperBound.set(upper);
+    
+    public void setCount(long counter) {
+        count.set(counter);
+    }
+    
+    /**
+     * Returns the maximum amount of time that it took for one invocation of an
+     * operation, since measurement started.
+     */
+    public long getMaxTime() {
+        return maxTime.get();
+    }
+    
+    public void setMaxTime(long maximumTime) {
+        maxTime.set(maximumTime);
+    }
+    
+    /**
+     * Returns the minimum amount of time that it took for one invocation of an
+     * operation, since measurement started.
+     */
+    public long getMinTime() {
+        return minTime.get();
+    }    
+
+    public void setMinTime(long minimumTime) {
+        minTime.set(minimumTime);
+    }
+    
+    /**
+     * Returns the amount of time that it took for all invocations, 
+     * since measurement started.
+     */
+    public long getTotalTime() {
+        return totTime.get();
+    }
+
+    public void setTotalTime(long totalTime) {
+        totTime.set(totalTime);
     }
 
     // todo: equals implementation

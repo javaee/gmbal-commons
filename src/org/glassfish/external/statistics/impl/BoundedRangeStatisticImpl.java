@@ -34,67 +34,103 @@
  * holder.
  */
 
-package org.glassfish.api.statistics.impl;
-import org.glassfish.api.statistics.CountStatistic;
+package org.glassfish.external.statistics.impl;
+import org.glassfish.external.statistics.BoundedRangeStatistic;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.lang.reflect.*;
 
+
 /** 
  * @author Sreenivas Munnangi
  */
-public class CountStatisticImpl extends StatisticImpl
-    implements CountStatistic, InvocationHandler {
+public final class BoundedRangeStatisticImpl extends StatisticImpl 
+    implements BoundedRangeStatistic, InvocationHandler {
     
-    private AtomicLong count = new AtomicLong(Long.MIN_VALUE);
-
-    private CountStatistic cs = (CountStatistic) Proxy.newProxyInstance(
-            CountStatistic.class.getClassLoader(),
-            new Class[] { CountStatistic.class },
+    private AtomicLong lowerBound = new AtomicLong(0L);
+    private AtomicLong upperBound = new AtomicLong(0L);
+    private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
+    private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
+    private AtomicLong lowWaterMark = new AtomicLong(Long.MIN_VALUE);
+    
+    private BoundedRangeStatistic bs = (BoundedRangeStatistic) Proxy.newProxyInstance(
+            BoundedRangeStatistic.class.getClassLoader(),
+            new Class[] { BoundedRangeStatistic.class },
             this);
 
-    public CountStatisticImpl(long countVal, String name, String unit, 
-                              String desc, long sampleTime, long startTime) {
+    public String toString() {
+        return super.toString() + NEWLINE + 
+            "Current: " + getCurrent() + NEWLINE +
+            "LowWaterMark: " + getLowWaterMark() + NEWLINE +
+            "HighWaterMark: " + getHighWaterMark() + NEWLINE +
+            "LowerBound: " + getLowerBound() + NEWLINE +
+            "UpperBound: " + getUpperBound();
+    }
+
+
+    public BoundedRangeStatisticImpl(long curVal, long highMark, long lowMark,
+                                     long upper, long lower, String name,
+                                     String unit, String desc, long startTime,
+                                     long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        count.set(countVal); 
+        currentVal.set(curVal);
+        highWaterMark.set(highMark);
+        lowWaterMark.set(lowMark);
+        upperBound.set(upper);
+        lowerBound.set(lower);
     }
     
-    public CountStatisticImpl(String name, String unit, String desc) {
-        super(name, unit, desc);
-    }
-    
-    public synchronized CountStatistic getStatistic() {
-        return cs;
+    public synchronized BoundedRangeStatistic getStatistic() {
+        return bs;
     }
 
     public synchronized Map getStaticAsMap() {
         Map m = super.getStaticAsMap();
-        m.put("count", getCount());
+        m.put("current", getCurrent());
+        m.put("lowerbound", getLowerBound());
+        m.put("upperbound", getUpperBound());
+        m.put("lowwatermark", getLowWaterMark());
+        m.put("highwatermark", getHighWaterMark());
         return m;
     }
 
-    public String toString() {
-        return super.toString() + NEWLINE + "Count: " + getCount();
+    public long getCurrent() {
+        return currentVal.get();
     }
-
-    public long getCount() {
-        return count.get();
+    
+    public void setCurrent(long curVal) {
+        currentVal.set(curVal);
     }
-
-    public void setCount(long countVal) {
-        count.set(countVal);
+    public long getHighWaterMark() {
+        return highWaterMark.get();
     }
-
-    public void increment() {
-        count.incrementAndGet();
+    
+    public void setHighWaterMark(long highMark) {
+        highWaterMark.set(highMark);
     }
-
-    public void increment(long delta) {
-        count.addAndGet(delta);
+    public long getLowWaterMark() {
+        return lowWaterMark.get();
     }
-
-    public void decrement() {
-        count.decrementAndGet();
+    
+    public void setLowWaterMark(long lowMark) {
+        lowWaterMark.set(lowMark);
+    }
+    public long getLowerBound() {
+        return lowerBound.get();
+    }
+    
+    public void setLowerBound(long lower) {
+        lowerBound.set(lower);
+    }
+    /**
+     * Returns the highest possible value, that this statistic is permitted to attain.
+     */
+    public long getUpperBound() {
+        return upperBound.get();
+    }
+	
+    public void setUpperBound(long upper) {
+        upperBound.set(upper);
     }
 
     // todo: equals implementation

@@ -34,8 +34,8 @@
  * holder.
  */
 
-package org.glassfish.api.statistics.impl;
-import org.glassfish.api.statistics.Statistic;
+package org.glassfish.external.statistics.impl;
+import org.glassfish.external.statistics.Statistic;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;

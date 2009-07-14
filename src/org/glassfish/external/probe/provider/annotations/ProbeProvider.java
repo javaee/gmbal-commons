@@ -34,7 +34,7 @@
  * holder.
  * 
  */ 
-package org.glassfish.probe.provider.annotations;
+package org.glassfish.external.probe.provider.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -48,11 +48,12 @@ import java.lang.annotation.ElementType;
  */
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface Probe {
+@Target({ElementType.TYPE})
+public @interface ProbeProvider {
 
-    public String name() default "";
     public String providerName() default "";
+    public String moduleProviderName() default "";
     public String moduleName() default "";
+    public String probeProviderName() default "";
 
 }

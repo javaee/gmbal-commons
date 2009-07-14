@@ -34,8 +34,8 @@
  * holder.
  */
 
-package org.glassfish.api.statistics.impl;
-import org.glassfish.api.statistics.RangeStatistic;
+package org.glassfish.external.statistics.impl;
+import org.glassfish.external.statistics.CountStatistic;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.lang.reflect.*;
@@ -43,74 +43,58 @@ import java.lang.reflect.*;
 /** 
  * @author Sreenivas Munnangi
  */
-public final class RangeStatisticImpl extends StatisticImpl 
-    implements RangeStatistic, InvocationHandler {
+public class CountStatisticImpl extends StatisticImpl
+    implements CountStatistic, InvocationHandler {
     
-    private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong lowWaterMark = new AtomicLong(Long.MIN_VALUE);
+    private AtomicLong count = new AtomicLong(Long.MIN_VALUE);
 
-    private RangeStatistic rs = (RangeStatistic) Proxy.newProxyInstance(
-            RangeStatistic.class.getClassLoader(),
-            new Class[] { RangeStatistic.class },
+    private CountStatistic cs = (CountStatistic) Proxy.newProxyInstance(
+            CountStatistic.class.getClassLoader(),
+            new Class[] { CountStatistic.class },
             this);
-    
-    public RangeStatisticImpl(long curVal, long highMark, long lowMark, 
-                              String name, String unit, String desc, 
-                              long startTime, long sampleTime) {
+
+    public CountStatisticImpl(long countVal, String name, String unit, 
+                              String desc, long sampleTime, long startTime) {
         super(name, unit, desc, startTime, sampleTime);
-        currentVal.set(curVal);
-        highWaterMark.set(highMark);
-        lowWaterMark.set(lowMark);
+        count.set(countVal); 
+    }
+    
+    public CountStatisticImpl(String name, String unit, String desc) {
+        super(name, unit, desc);
+    }
+    
+    public synchronized CountStatistic getStatistic() {
+        return cs;
     }
 
-    public synchronized RangeStatistic getStatistic() {
-        return rs;
-    }
-    
     public synchronized Map getStaticAsMap() {
         Map m = super.getStaticAsMap();
-        m.put("current", getCurrent());
-        m.put("lowwatermark", getLowWaterMark());
-        m.put("highwatermark", getHighWaterMark());
+        m.put("count", getCount());
         return m;
     }
 
-    public long getCurrent() {
-        return currentVal.get();
+    public String toString() {
+        return super.toString() + NEWLINE + "Count: " + getCount();
     }
-    
-    public void setCurrent(long curVal) {
-        currentVal.set(curVal);
+
+    public long getCount() {
+        return count.get();
     }
-    
-    /**
-     * Returns the highest value of this statistic, since measurement started.
-     */
-    public long getHighWaterMark() {
-        return highWaterMark.get();
+
+    public void setCount(long countVal) {
+        count.set(countVal);
     }
-    
-    public void setHighWaterMark(long highMark) {
-        highWaterMark.set(highMark);
+
+    public void increment() {
+        count.incrementAndGet();
     }
-    
-    /**
-     * Returns the lowest value of this statistic, since measurement started.
-     */
-    public long getLowWaterMark() {
-        return lowWaterMark.get();
+
+    public void increment(long delta) {
+        count.addAndGet(delta);
     }
-    
-    public void setLowWaterMark(long lowMark) {
-        lowWaterMark.set(lowMark);
-    }
-    
-    public final String toString() {
-        return super.toString() + NEWLINE + 
-            "Current: " + getCurrent() + NEWLINE +
-            "LowWaterMark: " + getLowWaterMark() + NEWLINE +
-            "HighWaterMark: " + getHighWaterMark();
+
+    public void decrement() {
+        count.decrementAndGet();
     }
 
     // todo: equals implementation

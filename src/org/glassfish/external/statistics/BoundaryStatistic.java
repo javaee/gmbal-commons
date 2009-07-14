@@ -34,29 +34,25 @@
  * holder.
  */
 
-package org.glassfish.api.statistics;
+package org.glassfish.external.statistics;
 
 import org.glassfish.gmbal.ManagedAttribute;
 import org.glassfish.gmbal.ManagedData;
 
 /**
- * Custom statistic type created for the Sun ONE Application Server.
- * The goal is to be able to represent changing attribute values that are strings
- * in the form of Statistics. Semantically, it is analogous to a {@link CountStatistic},
- * the only difference being in the value that is returned. Unlike a CountStatistic
- * (which always is unidirectional), this Statistic type is not having any
- * specified direction, simply because there is no natural order. An example
- * of the values that an instance of this statistic type can assume is: A State
- * Statistic which can have "CONNECTED, CLOSED, DISCONNECTED" as the permissible
- * values and the current value can be any one of them (and them only).
- * The permissible values are upto a particular implementation.
+ * Specifies standard measurements of the upper and lower limits of the value of an attribute. 
  */
-
 @ManagedData
-public interface StringStatistic extends Statistic {
+public interface BoundaryStatistic extends Statistic {
     /**
-     * Returns the String value of the statistic
+     * The upper limit of the value of this attribute. 
      */
     @ManagedAttribute
-    String getCurrent();
+    long getUpperBound();
+
+    /**
+     * The lower limit of the value of this attribute.The upper limit of the value of this attribute. 
+     */
+    @ManagedAttribute
+    long getLowerBound();
 }

@@ -34,8 +34,8 @@
  * holder.
  */
 
-package org.glassfish.api.statistics.impl;
-import org.glassfish.api.statistics.BoundaryStatistic;
+package org.glassfish.external.statistics.impl;
+import org.glassfish.external.statistics.RangeStatistic;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.lang.reflect.*;
@@ -43,50 +43,74 @@ import java.lang.reflect.*;
 /** 
  * @author Sreenivas Munnangi
  */
-public final class BoundaryStatisticImpl extends StatisticImpl 
-    implements BoundaryStatistic, InvocationHandler {
+public final class RangeStatisticImpl extends StatisticImpl 
+    implements RangeStatistic, InvocationHandler {
     
-    private AtomicLong lowerBound = new AtomicLong(0L);
-    private AtomicLong upperBound = new AtomicLong(0L);
-	
-    private BoundaryStatistic bs = (BoundaryStatistic) Proxy.newProxyInstance(
-            BoundaryStatistic.class.getClassLoader(),
-            new Class[] { BoundaryStatistic.class },
-            this);
+    private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
+    private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
+    private AtomicLong lowWaterMark = new AtomicLong(Long.MIN_VALUE);
 
-    public BoundaryStatisticImpl(long lower, long upper, String name,
-                                 String unit, String desc, long startTime,
-                                 long sampleTime) {
+    private RangeStatistic rs = (RangeStatistic) Proxy.newProxyInstance(
+            RangeStatistic.class.getClassLoader(),
+            new Class[] { RangeStatistic.class },
+            this);
+    
+    public RangeStatisticImpl(long curVal, long highMark, long lowMark, 
+                              String name, String unit, String desc, 
+                              long startTime, long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        upperBound.set(upper);
-        lowerBound.set(lower);
+        currentVal.set(curVal);
+        highWaterMark.set(highMark);
+        lowWaterMark.set(lowMark);
     }
 
-    public synchronized BoundaryStatistic getStatistic() {
-        return bs;
+    public synchronized RangeStatistic getStatistic() {
+        return rs;
     }
     
     public synchronized Map getStaticAsMap() {
         Map m = super.getStaticAsMap();
-        m.put("lowerbound", getLowerBound());
-        m.put("upperbound", getUpperBound());
+        m.put("current", getCurrent());
+        m.put("lowwatermark", getLowWaterMark());
+        m.put("highwatermark", getHighWaterMark());
         return m;
     }
 
-    public long getLowerBound() {
-        return lowerBound.get();
+    public long getCurrent() {
+        return currentVal.get();
     }
     
-    public void setLowerBound(long lower) {
-        lowerBound.set(lower);
+    public void setCurrent(long curVal) {
+        currentVal.set(curVal);
     }
     
-    public long getUpperBound() {
-        return upperBound.get();
+    /**
+     * Returns the highest value of this statistic, since measurement started.
+     */
+    public long getHighWaterMark() {
+        return highWaterMark.get();
     }
-
-    public void setUpperBound(long upper) {
-        upperBound.set(upper);
+    
+    public void setHighWaterMark(long highMark) {
+        highWaterMark.set(highMark);
+    }
+    
+    /**
+     * Returns the lowest value of this statistic, since measurement started.
+     */
+    public long getLowWaterMark() {
+        return lowWaterMark.get();
+    }
+    
+    public void setLowWaterMark(long lowMark) {
+        lowWaterMark.set(lowMark);
+    }
+    
+    public final String toString() {
+        return super.toString() + NEWLINE + 
+            "Current: " + getCurrent() + NEWLINE +
+            "LowWaterMark: " + getLowWaterMark() + NEWLINE +
+            "HighWaterMark: " + getHighWaterMark();
     }
 
     // todo: equals implementation

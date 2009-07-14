@@ -34,8 +34,8 @@
  * holder.
  */
 
-package org.glassfish.api.statistics.impl;
-import org.glassfish.api.statistics.TimeStatistic;
+package org.glassfish.external.statistics.impl;
+import org.glassfish.external.statistics.BoundaryStatistic;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.lang.reflect.*;
@@ -43,96 +43,50 @@ import java.lang.reflect.*;
 /** 
  * @author Sreenivas Munnangi
  */
-public class TimeStatisticImpl extends StatisticImpl 
-    implements TimeStatistic, InvocationHandler {
+public final class BoundaryStatisticImpl extends StatisticImpl 
+    implements BoundaryStatistic, InvocationHandler {
     
-    private AtomicLong count = new AtomicLong(Long.MIN_VALUE);
-    private final long timeNow = System.currentTimeMillis();
-    private AtomicLong maxTime = new AtomicLong(timeNow);
-    private AtomicLong minTime = new AtomicLong(timeNow);
-    private AtomicLong totTime = new AtomicLong(0L);
-
-    private TimeStatistic ts = (TimeStatistic) Proxy.newProxyInstance(
-            TimeStatistic.class.getClassLoader(),
-            new Class[] { TimeStatistic.class },
+    private AtomicLong lowerBound = new AtomicLong(0L);
+    private AtomicLong upperBound = new AtomicLong(0L);
+	
+    private BoundaryStatistic bs = (BoundaryStatistic) Proxy.newProxyInstance(
+            BoundaryStatistic.class.getClassLoader(),
+            new Class[] { BoundaryStatistic.class },
             this);
 
-    public final String toString() {
-        return super.toString() + NEWLINE + 
-            "Count: " + getCount() + NEWLINE +
-            "MinTime: " + getMinTime() + NEWLINE +
-            "MaxTime: " + getMaxTime() + NEWLINE +
-            "TotalTime: " + getTotalTime();
-    }
-
-    public TimeStatisticImpl(long counter, long maximumTime, long minimumTime,
-                             long totalTime, String name, String unit, 
-                             String desc, long startTime, long sampleTime) {
+    public BoundaryStatisticImpl(long lower, long upper, String name,
+                                 String unit, String desc, long startTime,
+                                 long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        count.set(counter);
-        maxTime.set(maximumTime);
-        minTime.set(minimumTime);
-        totTime.set(totalTime);
+        upperBound.set(upper);
+        lowerBound.set(lower);
     }
 
-    public synchronized TimeStatistic getStatistic() {
-        return ts;
+    public synchronized BoundaryStatistic getStatistic() {
+        return bs;
     }
     
     public synchronized Map getStaticAsMap() {
         Map m = super.getStaticAsMap();
-        m.put("count", getCount());
-        m.put("maxtime", getMaxTime());
-        m.put("mintime", getMinTime());
-        m.put("totaltime", getTotalTime());
+        m.put("lowerbound", getLowerBound());
+        m.put("upperbound", getUpperBound());
         return m;
     }
 
-    /**
-     * Returns the number of times an operation was invoked 
-     */
-    public long getCount() {
-        return count.get();
+    public long getLowerBound() {
+        return lowerBound.get();
     }
     
-    public void setCount(long counter) {
-        count.set(counter);
+    public void setLowerBound(long lower) {
+        lowerBound.set(lower);
     }
     
-    /**
-     * Returns the maximum amount of time that it took for one invocation of an
-     * operation, since measurement started.
-     */
-    public long getMaxTime() {
-        return maxTime.get();
-    }
-    
-    public void setMaxTime(long maximumTime) {
-        maxTime.set(maximumTime);
-    }
-    
-    /**
-     * Returns the minimum amount of time that it took for one invocation of an
-     * operation, since measurement started.
-     */
-    public long getMinTime() {
-        return minTime.get();
-    }    
-
-    public void setMinTime(long minimumTime) {
-        minTime.set(minimumTime);
-    }
-    
-    /**
-     * Returns the amount of time that it took for all invocations, 
-     * since measurement started.
-     */
-    public long getTotalTime() {
-        return totTime.get();
+    public long getUpperBound() {
+        return upperBound.get();
     }
 
-    public void setTotalTime(long totalTime) {
-        totTime.set(totalTime);
+    public void setUpperBound(long upper) {
+        upperBound.set(upper);
     }
 
     // todo: equals implementation

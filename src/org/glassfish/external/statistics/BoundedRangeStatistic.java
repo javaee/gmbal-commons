@@ -34,7 +34,7 @@
  * holder.
  */
 
-package org.glassfish.api.statistics;
+package org.glassfish.external.statistics;
 
 import org.glassfish.gmbal.ManagedData;
 

@@ -34,8 +34,8 @@
  * holder.
  */
 
-package org.glassfish.api.statistics.impl;
-import org.glassfish.api.statistics.StringStatistic;
+package org.glassfish.external.statistics.impl;
+import org.glassfish.external.statistics.StringStatistic;
 import java.util.Map;
 import java.lang.reflect.*;
 

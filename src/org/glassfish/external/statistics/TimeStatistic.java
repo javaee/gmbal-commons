@@ -1,8 +1,8 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
+ * 
  * Copyright 1997-2007 Sun Microsystems, Inc. All rights reserved.
- *
+ * 
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
  * and Distribution License("CDDL") (collectively, the "License").  You
@@ -10,7 +10,7 @@
  * a copy of the License at https://glassfish.dev.java.net/public/CDDL+GPL.html
  * or glassfish/bootstrap/legal/LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
- *
+ * 
  * When distributing the software, include this License Header Notice in each
  * file and include the License file at glassfish/bootstrap/legal/LICENSE.txt.
  * Sun designates this particular file as subject to the "Classpath" exception
@@ -19,9 +19,9 @@
  * Header, with the fields enclosed by brackets [] replaced by your own
  * identifying information: "Portions Copyrighted [year]
  * [name of copyright owner]"
- *
+ * 
  * Contributor(s):
- *
+ * 
  * If you wish your version of this file to be governed by only the CDDL or
  * only the GPL Version 2, indicate your decision by adding "[Contributor]
  * elects to include this software in this distribution under the [CDDL or GPL
@@ -33,23 +33,38 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package org.glassfish.probe.provider.annotations;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
+package org.glassfish.external.statistics;
+
+import org.glassfish.gmbal.ManagedAttribute;
+import org.glassfish.gmbal.ManagedData;
 
 /**
- *
- * @author Prashanth Abbagani
- *         Date: May 26, 2009
+ * Specifies standard timing measurements. 
  */
+@ManagedData
+public interface TimeStatistic extends Statistic {
+    /**
+     * Number of times the operation was invoked since the beginning of this measurement. 
+     */
+    @ManagedAttribute
+    long getCount();
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface ProbeListener {
+    /**
+     * The maximum amount of time taken to complete one invocation of this operation since the beginning of this measurement. 
+     */
+    @ManagedAttribute
+    long getMaxTime();
 
-    public abstract String value();
+    /**
+     * The minimum amount of time taken to complete one invocation of this operation since the beginning of this measurement. 
+     */
+    @ManagedAttribute
+    long getMinTime();
 
+    /**
+     * This is the sum total of time taken to complete every invocation of this operation since the beginning of this measurement. Dividing totalTime by count will give you the average execution time for this operation. 
+     */
+    @ManagedAttribute
+    long getTotalTime();
 }

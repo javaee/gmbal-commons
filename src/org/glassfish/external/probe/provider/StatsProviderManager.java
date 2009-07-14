@@ -35,7 +35,7 @@
  *
  */
 
-package org.glassfish.probe.provider;
+package org.glassfish.external.probe.provider;
 
 import java.util.Vector;
 

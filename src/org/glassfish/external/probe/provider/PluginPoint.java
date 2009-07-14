@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package org.glassfish.probe.provider;
+package org.glassfish.external.probe.provider;
 
 /**
  *

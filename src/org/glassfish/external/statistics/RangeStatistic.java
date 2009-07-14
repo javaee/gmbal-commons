@@ -34,44 +34,31 @@
  * holder.
  */
 
-package org.glassfish.api.statistics;
+package org.glassfish.external.statistics;
 
 import org.glassfish.gmbal.ManagedAttribute;
 import org.glassfish.gmbal.ManagedData;
 
 /**
- * The Statistic model and its sub-models specify the data models which are requried to be used to provide the performance data described by the specific attributes in the Stats models. 
+ * Specifies standard measurements of the lowest and highest values an attribute has held as well as its current value. 
  */
 @ManagedData
-public interface Statistic {
+public interface RangeStatistic extends Statistic {
     /**
-     * The name of this Statistic. 
+     * The highest value this attribute has held since the beginning of the measurement. 
      */
     @ManagedAttribute
-    String getName();
+    long getHighWaterMark();
 
     /**
-     * The unit of measurement for this Statistic.
-     * Valid values for TimeStatistic measurements are "HOUR", "MINUTE", "SECOND", "MILLISECOND", "MICROSECOND" and "NANOSECOND". 
+     * The lowest value this attribute has held since the beginning of the measurement. 
      */
     @ManagedAttribute
-    String getUnit();
+    long getLowWaterMark();
 
     /**
-     * A human-readable description of the Statistic. 
+     * The current value of this attribute. 
      */
     @ManagedAttribute
-    String getDescription();
-
-    /**
-     * The time of the first measurement represented as a long, whose value is the number of milliseconds since January 1, 1970, 00:00:00. 
-     */
-    @ManagedAttribute
-    long getStartTime();
-
-    /**
-     * The time of the last measurement represented as a long, whose value is the number of milliseconds since January 1, 1970, 00:00:00. 
-     */
-    @ManagedAttribute
-    long getLastSampleTime();
+    long getCurrent();
 }
