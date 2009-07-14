@@ -96,7 +96,7 @@
         <property name="local.url"                      value="file:${local.maven}"/>
         <property name="full.jar"                       value="dist/GlassFish_Common_APIs.jar"/>
         <property name="groupId"                        value="org.glassfish.external"/>
-        <property name="artifactId"                     value="common-monitoring-api"/>
+        <property name="artifactId"                     value="management-api"/>
     </target>
     
     <target name="clean">
