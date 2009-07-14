@@ -123,10 +123,7 @@
         <mkdir dir="dist/bundles"/> 
         <jar jarfile="dist/bundles/${artifactId}-sources.jar" duplicate="fail">
             <fileset dir="src">
-                <include name="org/glassfish/api/statistics/*.java"/>
-                <include name="org/glassfish/api/statistics/impl/*.java"/>
-                <include name="org/glassfish/probe/provider/*.java"/>
-                <include name="org/glassfish/probe/provider/annotations/*.java"/>
+                <include name="org/glassfish/external/**/*.java"/>
             </fileset>
         </jar>
     </target>
