@@ -139,7 +139,7 @@ public final class AMXGlassfish
         }
     }
 
-    public static String prop(final String key, final String value)
+    private static String prop(final String key, final String value)
     {
         return key + "=" + value;
     }
