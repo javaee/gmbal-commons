@@ -191,7 +191,7 @@
                 </remoteRepository>
                 <pom refid="pom.file"/>
             </artifact:deploy>
-            <!-- <delete file="make/temp.pom" verbose="true"/> -->
+            <delete file="make/temp.pom" verbose="true"/>
         </sequential>
     </macrodef>
 

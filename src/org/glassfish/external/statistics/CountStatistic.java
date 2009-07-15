@@ -36,17 +36,12 @@
 
 package org.glassfish.external.statistics;
 
-import org.glassfish.gmbal.ManagedAttribute;
-import org.glassfish.gmbal.ManagedData;
-
 /**
  * Specifies standard count measurements. 
  */
-@ManagedData
 public interface CountStatistic extends Statistic {
     /**
      * The count since the last reset. 
      */
-    @ManagedAttribute
     long getCount();
 }

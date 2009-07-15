@@ -36,9 +36,6 @@
 
 package org.glassfish.external.statistics;
 
-import org.glassfish.gmbal.ManagedAttribute;
-import org.glassfish.gmbal.ManagedData;
-
 /**
  * Custom statistic type created for the Sun ONE Application Server.
  * The goal is to be able to represent changing attribute values that are strings
@@ -52,11 +49,9 @@ import org.glassfish.gmbal.ManagedData;
  * The permissible values are upto a particular implementation.
  */
 
-@ManagedData
 public interface StringStatistic extends Statistic {
     /**
      * Returns the String value of the statistic
      */
-    @ManagedAttribute
     String getCurrent();
 }
