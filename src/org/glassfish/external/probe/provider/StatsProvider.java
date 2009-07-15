@@ -41,11 +41,9 @@ package org.glassfish.external.probe.provider;
  *
  * @author abbagani
  */
-public interface StatsProviderManagerDelegate {
+public interface StatsProvider {
 
-   public void register(String configElement, PluginPoint pp,
-                        String subTreeRoot, Object statsProvider);
-   public void unregister(Object statsProvider);
-   public boolean hasListeners(String probeStr);
-
-} 
+    public void enable();
+    
+    public void disable();
+}

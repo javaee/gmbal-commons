@@ -65,6 +65,34 @@ public class StatsProviderManager {
    }
 
 
+   synchronized public static boolean unregister(Object statsProvider) {
+      //Unregister the statsProvider if the delegate is not null
+      if (spmd == null) {
+          for (StatsProviderRegistryElement spre : toBeRegistered) {
+              if (spre.getStatsProvider() == statsProvider) {
+                  toBeRegistered.remove(spre);
+                  break;
+              }
+          }
+
+      } else {
+          spmd.unregister(statsProvider);
+          return true;
+      }
+       return false;
+   }
+
+
+   synchronized public static boolean hasListeners(String probeStr) {
+      //See if the probe has any listeners registered
+      if (spmd == null) {
+          return false;
+      } else {
+          return spmd.hasListeners(probeStr);
+      }
+   }
+
+
    synchronized public static void setStatsProviderManagerDelegate(
                                     StatsProviderManagerDelegate lspmd) {
       //System.out.println("in StatsProviderManager.setStatsProviderManagerDelegate ***********");
@@ -103,6 +131,10 @@ public class StatsProviderManager {
            this.pp = pp;
            this.subTreeRoot = subTreeRoot;
            this.statsProvider = statsProvider;
+       }
+
+       public Object getStatsProvider() {
+           return statsProvider;
        }
    }
 
