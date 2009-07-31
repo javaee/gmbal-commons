@@ -106,9 +106,9 @@ public final class AMXGlassfish
     /** Make a new AMX ObjectName with unchecked exception.
      *  name must be null to create a singleton ObjectName.
      *  Note that the arguments must not contain the characters
-     * @name pp The parent part
-     * @name type The ObjectName type
-     * @name name The ObjectName name
+     * @param pp The parent part
+     * @param type The ObjectName type
+     * @param name The ObjectName name
      * @return The objectname with pp, type, and (optionally) name.
      */
     public ObjectName newObjectName(
