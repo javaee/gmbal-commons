@@ -48,11 +48,13 @@ public final class AMXGlassfish
     /** Default domain support */
     public static final AMXGlassfish DEFAULT = new AMXGlassfish(DEFAULT_JMX_DOMAIN);
     
+    private final String     mJMXDomain;
     private final ObjectName mDomainRoot;
     
     /** Anything other than {@link #DEFAULT} is not supported in Glassfish V3 */
     public AMXGlassfish(final String jmxDomain)
     {
+        mJMXDomain = jmxDomain;
         mDomainRoot = newObjectName("", "domain-root", null);
     }
 
@@ -63,7 +65,7 @@ public final class AMXGlassfish
     */
     public String amxJMXDomain()
     {
-        return "amx";
+        return mJMXDomain;
     }
     
     /** JMX domain used by AMX support MBeans.  Private use only */
@@ -129,13 +131,13 @@ public final class AMXGlassfish
     {
         String name = s;
         if ( ! name.startsWith( amxJMXDomain() ) ) {
-            name = amxJMXDomain() + ":";
+            name = amxJMXDomain() + ":" + name;
         }
         
         try {
-            return new ObjectName( s );
+            return new ObjectName( name );
         } catch( final Exception e ) {
-            throw new RuntimeException("bad ObjectName", e);
+            throw new RuntimeException("bad ObjectName: " + name, e);
         }
     }
 
@@ -144,6 +146,8 @@ public final class AMXGlassfish
         return key + "=" + value;
     }
 }
+
+
 
 
 
