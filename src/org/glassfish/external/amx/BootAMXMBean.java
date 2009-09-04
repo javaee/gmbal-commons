@@ -27,6 +27,7 @@ import javax.management.remote.JMXServiceURL;
 
 /**
     MBean responsible for booting the AMX system.
+    To get its ObjectName, use {@link AMXGlassfish#getBootAMXMBeanObjectName}.
  */
 @org.glassfish.external.arc.Taxonomy(stability = org.glassfish.external.arc.Stability.UNCOMMITTED)
 public interface BootAMXMBean 
@@ -40,10 +41,6 @@ public interface BootAMXMBean
     public static final String BOOT_AMX_OPERATION_NAME = "bootAMX";
 
     public JMXServiceURL[] getJMXServiceURLs();
-    
-    /** ObjectName for BooterNewMBean */
-    public static final ObjectName OBJECT_NAME = AMXUtil.newObjectName(AMXGlassfish.DEFAULT.amxSupportDomain(), "type=boot-amx");
-
 }
 
 

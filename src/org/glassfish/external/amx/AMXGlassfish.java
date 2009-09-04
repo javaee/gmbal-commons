@@ -36,6 +36,11 @@
 package org.glassfish.external.amx;
 
 import javax.management.ObjectName;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerConnection;
+
+import java.io.IOException;
+
 
 /**
  * AMX behavior specific to Glassfish V3.
@@ -125,7 +130,7 @@ public final class AMXGlassfish
         return newObjectName( props);
     }
 
-    /** Make a new ObjectName with unchecked exception */
+    /** Make a new ObjectName for AMX domain with unchecked exception */
     public ObjectName newObjectName(final String s)
     {
         String name = s;
@@ -133,18 +138,179 @@ public final class AMXGlassfish
             name = amxJMXDomain() + ":" + name;
         }
         
-        try {
-            return new ObjectName( name );
-        } catch( final Exception e ) {
-            throw new RuntimeException("bad ObjectName: " + name, e);
-        }
+        return AMXUtil.newObjectName( name );
     }
-
+    
     private static String prop(final String key, final String value)
     {
         return key + "=" + value;
     }
+    
+    /**
+        ObjectName for {@link BootAMXMBean}
+     */
+    public ObjectName getBootAMXMBeanObjectName()
+    {
+        return newObjectName( "type=boot-amx" );
+    }
+    
+    /**
+    Invoke the bootAMX() method on {@link BootAMXMBean}.  Upon return,
+    AMX continues to load.
+    A cilent should call {@link invokeWaitAMXReady} prior to use.
+    */
+    public void invokeBootAMX(final MBeanServerConnection conn)
+    {
+        // start AMX and wait for it to be ready
+        try
+        {
+            conn.invoke( getBootAMXMBeanObjectName(), BootAMXMBean.BOOT_AMX_OPERATION_NAME, null, null);
+        }
+        catch (final Exception e)
+        {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+    
+    /**
+        Invoke the waitAMXReady() method on the DomainRoot MBean, which must already be loaded.
+     */
+    private static void invokeWaitAMXReady(final MBeanServerConnection conn, final ObjectName objectName)
+    {
+        try
+        {
+            conn.invoke( objectName, "waitAMXReady", null, null );
+        }
+        catch( final Exception e )
+        {
+            throw new RuntimeException(e);
+        }
+    }
+    
+      /**
+        Listen for the registration of AMX DomainRoot 
+        Listening starts automatically.
+     */
+    public <T extends MBeanListener.Callback> MBeanListener<T> listenForDomainRoot(
+        final MBeanServerConnection server,
+        final T callback)
+    {
+        final MBeanListener<T> listener = new MBeanListener<T>( server, domainRoot(), callback);
+        listener.startListening();
+        return listener;
+    }
+
+    private static final class WaitForDomainRootListenerCallback extends MBeanListener.CallbackImpl {
+        private final MBeanServerConnection mConn;
+
+        public WaitForDomainRootListenerCallback( final MBeanServerConnection conn ) {
+            mConn = conn;
+        }
+        
+        @Override
+        public void mbeanRegistered(final ObjectName objectName, final MBeanListener listener) {
+            super.mbeanRegistered(objectName,listener);
+            invokeWaitAMXReady(mConn, objectName);
+            mLatch.countDown();
+        }
+    }
+
+    /**
+        Wait until AMX has loaded and is ready for use.
+        <p>
+        This will <em>not</em> cause AMX to load; it will block forever until AMX is ready. In other words,
+        don't call this method unless it's a convenient thread that can wait forever.
+     */
+    public ObjectName waitAMXReady( final MBeanServerConnection server)
+    {
+        final WaitForDomainRootListenerCallback callback = new WaitForDomainRootListenerCallback(server);
+        listenForDomainRoot( server, callback );
+        callback.await();
+        return callback.getRegistered();
+    }
+    
+    /**
+        Listen for the registration of the {@link BootAMXMBean}.
+        Listening starts automatically.  See {@link AMXBooter#BootAMXCallback}.
+     */
+    public <T extends MBeanListener.Callback> MBeanListener<T> listenForBootAMX(
+        final MBeanServerConnection server,
+        final T callback)
+    {
+        final MBeanListener<T> listener = new MBeanListener<T>( server, getBootAMXMBeanObjectName(), callback);
+        listener.startListening();
+        return listener;
+    }
+
+    /**
+        Callback for {@link MBeanListener} that waits for the BootAMXMBean to appear;
+        it always will load early in server startup. Once it has loaded, AMX can be booted
+        via {@link #bootAMX}.  A client should normally just call {@link #bootAMX}, but
+        this callback may be suclassed if desired, and used as a trigger to
+        boot AMX and then take other dependent actions.
+     */
+    public static class BootAMXCallback extends MBeanListener.CallbackImpl
+    {
+        private final MBeanServerConnection mConn;
+        public BootAMXCallback(final MBeanServerConnection conn)
+        {
+            mConn = conn;
+        }
+
+        @Override
+        public void mbeanRegistered(final ObjectName objectName, final MBeanListener listener)
+        {
+            super.mbeanRegistered(objectName, listener);
+            mLatch.countDown();
+        }
+    }
+
+    /**
+    Ensure that AMX is loaded and ready to use.  This method returns only when all
+    AMX subsystems have been loaded.
+    It can be called more than once without ill effect, subsequent calls are ignored.
+    @param conn connection to the MBeanServer
+    @return the ObjectName of the domain-root MBean
+     */
+    public ObjectName bootAMX(final MBeanServerConnection conn)
+        throws IOException
+    {
+        final ObjectName domainRoot = domainRoot();
+        
+        if ( !conn.isRegistered( domainRoot ) )
+        {
+            // wait for the BootAMXMBean to be available (loads at startup)
+            final BootAMXCallback callback = new BootAMXCallback(conn);
+            listenForBootAMX(conn, callback);
+            callback.await(); // block until the MBean appears
+
+            invokeBootAMX(conn);
+            invokeWaitAMXReady(conn, domainRoot);
+        }
+        else
+        {
+            invokeWaitAMXReady(conn, domainRoot );
+        }
+        return domainRoot;
+    }
+    
+    public ObjectName bootAMX(final MBeanServer server)
+    {
+        try
+        {
+            return bootAMX( (MBeanServerConnection)server);
+        }
+        catch( final IOException e )
+        {
+            throw new RuntimeException(e);
+        }
+    }
 }
+
+
+
+
 
 
 

@@ -38,76 +38,17 @@ package org.glassfish.external.amx;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
-import static org.glassfish.external.amx.AMX.*;
-
 /**
     Small utilities for AMXBooter and related.
  */
 @org.glassfish.external.arc.Taxonomy(stability = org.glassfish.external.arc.Stability.UNCOMMITTED)
 public final class AMXUtil
 {
-    private AMXUtil()
-    {
-    }
-    
+    private AMXUtil() {}
+ 
     /**
-        Invoke the bootAMX() method on {@link BootAMXMBean}.  Upon return,
-        AMX continues to load.
-        A cilent should call {@link invokeWaitAMXReady} prior to use.
+        Make a new ObjectName (unchecked exception).
      */
-    public static void invokeBootAMX(final MBeanServerConnection conn)
-    {
-        // start AMX and wait for it to be ready
-        try
-        {
-            conn.invoke(BootAMXMBean.OBJECT_NAME, BootAMXMBean.BOOT_AMX_OPERATION_NAME, null, null);
-        }
-        catch (final Exception e)
-        {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-    }
-    
-    /**
-        Invoke the waitAMXReady() method on the DomainRoot MBean, which must already be loaded.
-     */
-    public static ObjectName invokeWaitAMXReady(final MBeanServerConnection conn)
-    {
-        final ObjectName domainRoot = AMXGlassfish.DEFAULT.domainRoot();
-        try
-        {
-            conn.invoke( domainRoot, "waitAMXReady", null, null );
-        }
-        catch( final Exception e )
-        {
-            throw new RuntimeException(e);
-        }
-        return domainRoot;
-    }
-
-    /**
-    @return the ObjectName of DomainRoot if it exists, otherwise null
-     */
-    public static ObjectName findDomainRoot(final MBeanServerConnection conn)
-    {
-        final ObjectName objectName = AMXGlassfish.DEFAULT.domainRoot();
-        try
-        {
-            if (!conn.isRegistered(objectName))
-            {
-                return null;
-            }
-        }
-        catch (final Exception e)
-        {
-            throw new RuntimeException(e);
-        }
-
-        return objectName;
-    }
-
-
     public static ObjectName newObjectName(final String s)
     {
         try
@@ -120,23 +61,11 @@ public final class AMXUtil
         }
     }
 
-
-    /** Make a new AMX ObjectName with unchecked exception */
-    public static ObjectName newObjectName(
-            final String pp,
-            final String type,
-            final String name)
-    {
-        String props = prop(PARENT_PATH_KEY, pp) + "," + prop(TYPE_KEY, type);
-        if (name != null)
-        {
-            props = props + "," + prop(NAME_KEY, name);
-        }
-
-        return newObjectName( AMXGlassfish.DEFAULT.amxJMXDomain(), props);
-    }
-
-    /** Make a new ObjectName with unchecked exception */
+    /**
+        Make a new ObjectName (unchecked exception).
+        @param domain
+        @param props
+     */
     public static ObjectName newObjectName(
             final String domain,
             final String props)
@@ -144,9 +73,12 @@ public final class AMXUtil
         return newObjectName(domain + ":" + props);
     }
 
+    /**
+        Get the ObjectName of the MBeanServerDelegateObjectName.
+     */
     public static ObjectName getMBeanServerDelegateObjectName()
     {
-        return newObjectName("JMImplementation", "type=MBeanServerDelegate");
+        return newObjectName( "JMImplementation:type=MBeanServerDelegate" );
     }
 
     public static String prop(final String key, final String value)

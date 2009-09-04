@@ -56,6 +56,9 @@ public class MBeanListener<T extends MBeanListener.Callback> implements Notifica
 {
     private static void debug(final Object o) { System.out.println( "" + o ); }
     
+    /** listen for MBeans in a given domain of a given type[name] 
+        OR an ObjectName (below) */
+    private final String mJMXDomain;
     private final String mType;
     private final String mName;
     
@@ -170,6 +173,7 @@ public class MBeanListener<T extends MBeanListener.Callback> implements Notifica
     {
         mMBeanServer = server;
         mObjectName = objectName;
+        mJMXDomain = null;
         mType = null;
         mName = null;
         mCallback = callback;
@@ -184,10 +188,11 @@ public class MBeanListener<T extends MBeanListener.Callback> implements Notifica
      */
     public MBeanListener(
             final MBeanServerConnection server,
+            final String domain,
             final String type,
             final T callback)
     {
-        this(server, type, null, callback);
+        this(server, domain, type, null, callback);
     }
 
     /**
@@ -201,72 +206,20 @@ public class MBeanListener<T extends MBeanListener.Callback> implements Notifica
      */
     public MBeanListener(
             final MBeanServerConnection server,
+            final String domain,
             final String type,
             final String name,
             final T callback)
     {
         mMBeanServer = server;
+        mJMXDomain = domain;
         mType = type;
         mName = name;
         mObjectName = null;
         mCallback = callback;
     }
 
-    /**
-        Listen for the registration of AMX DomainRoot 
-        Listening starts automatically.
-     */
-    public static <T extends Callback> MBeanListener<T> listenForDomainRoot(
-        final MBeanServerConnection server,
-        final T callback)
-    {
-        final MBeanListener<T> listener = new MBeanListener<T>( server, AMXGlassfish.DEFAULT.domainRoot(), callback);
-        listener.startListening();
-        return listener;
-    }
-
-    private static final class WaitForDomainRootListenerCallback extends MBeanListener.CallbackImpl {
-        private final MBeanServerConnection mConn;
-
-        public WaitForDomainRootListenerCallback( final MBeanServerConnection conn ) {
-            mConn = conn;
-        }
-        
-        @Override
-        public void mbeanRegistered(final ObjectName objectName, final MBeanListener listener) {
-            super.mbeanRegistered(objectName,listener);
-            AMXUtil.invokeWaitAMXReady(mConn);
-            mLatch.countDown();
-        }
-    }
-
-    /**
-        Wait until AMX has loaded and is ready for use.
-        <p>
-        This will <em>not</em> cause AMX to load; it will block forever until AMX is ready. In other words,
-        don't call this method unless it's a convenient thread that can wait forever.
-     */
-    public static ObjectName waitAMXReady( final MBeanServerConnection server)
-    {
-        final WaitForDomainRootListenerCallback callback = new WaitForDomainRootListenerCallback(server);
-        listenForDomainRoot( server, callback );
-        callback.await();
-        return callback.getRegistered();
-    }
-    
-    /**
-        Listen for the registration of the {@link BootAMXMBean}.
-        Listening starts automatically.  See {@link AMXBooter#BootAMXCallback}.
-     */
-    public static <T extends Callback> MBeanListener<T> listenForBootAMX(
-        final MBeanServerConnection server,
-        final T callback)
-    {
-        final MBeanListener<T> listener = new MBeanListener<T>( server, BootAMXMBean.OBJECT_NAME, callback);
-        listener.startListening();
-        return listener;
-    }
-
+  
     private boolean isRegistered( final MBeanServerConnection conn, final ObjectName objectName )
     {
         try
@@ -312,7 +265,7 @@ public class MBeanListener<T extends MBeanListener.Callback> implements Notifica
                 props = props + "," + NAME_KEY + mName;
             }
 
-            final ObjectName pattern = AMXUtil.newObjectName(AMXGlassfish.DEFAULT.amxJMXDomain(), props);
+            final ObjectName pattern = AMXUtil.newObjectName(mJMXDomain + ":" +props);
             try
             {
                 final Set<ObjectName> matched = mMBeanServer.queryNames(pattern, null);
@@ -327,7 +280,8 @@ public class MBeanListener<T extends MBeanListener.Callback> implements Notifica
             }
         }
     }
-
+    
+    
     /** unregister the listener */
     public void stopListening()
     {
@@ -355,7 +309,7 @@ public class MBeanListener<T extends MBeanListener.Callback> implements Notifica
             {
                 match = true;
             }
-            else if ( objectName.getDomain().equals( AMXGlassfish.DEFAULT.amxJMXDomain() ) )
+            else if ( objectName.getDomain().equals( mJMXDomain ) )
             {
                 if ( mType != null && mType.equals(objectName.getKeyProperty(TYPE_KEY)) )
                 {
