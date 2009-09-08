@@ -151,7 +151,7 @@ public final class AMXGlassfish
      */
     public ObjectName getBootAMXMBeanObjectName()
     {
-        return newObjectName( "type=boot-amx" );
+        return AMXUtil.newObjectName( amxSupportDomain() + ":type=boot-amx" );
     }
     
     /**
@@ -286,6 +286,11 @@ public final class AMXGlassfish
             callback.await(); // block until the MBean appears
 
             invokeBootAMX(conn);
+            
+            final WaitForDomainRootListenerCallback drCallback = new WaitForDomainRootListenerCallback(conn);
+            listenForDomainRoot(conn, drCallback);
+            drCallback.await();
+            
             invokeWaitAMXReady(conn, domainRoot);
         }
         else
