@@ -48,7 +48,7 @@ public final class RangeStatisticImpl extends StatisticImpl
     
     private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
     private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong lowWaterMark = new AtomicLong(Long.MIN_VALUE);
+    private AtomicLong lowWaterMark = new AtomicLong(Long.MAX_VALUE);
 
     private RangeStatistic rs = (RangeStatistic) Proxy.newProxyInstance(
             RangeStatistic.class.getClassLoader(),
@@ -111,7 +111,7 @@ public final class RangeStatisticImpl extends StatisticImpl
         super.reset();
         currentVal.set(Long.MIN_VALUE);
         highWaterMark.set(Long.MIN_VALUE);
-        lowWaterMark.set(Long.MIN_VALUE);
+        lowWaterMark.set(Long.MAX_VALUE);
     }
     
     public final String toString() {

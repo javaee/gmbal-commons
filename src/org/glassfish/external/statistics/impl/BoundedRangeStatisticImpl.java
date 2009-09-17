@@ -51,7 +51,7 @@ public final class BoundedRangeStatisticImpl extends StatisticImpl
     private AtomicLong upperBound = new AtomicLong(0L);
     private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
     private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong lowWaterMark = new AtomicLong(Long.MIN_VALUE);
+    private AtomicLong lowWaterMark = new AtomicLong(Long.MAX_VALUE);
     
     private BoundedRangeStatistic bs = (BoundedRangeStatistic) Proxy.newProxyInstance(
             BoundedRangeStatistic.class.getClassLoader(),
@@ -158,7 +158,7 @@ public final class BoundedRangeStatisticImpl extends StatisticImpl
         upperBound.set(0L);
         currentVal.set(Long.MIN_VALUE);
         highWaterMark.set(Long.MIN_VALUE);
-        lowWaterMark.set(Long.MIN_VALUE);
+        lowWaterMark.set(Long.MAX_VALUE);
     }
 
     // todo: equals implementation

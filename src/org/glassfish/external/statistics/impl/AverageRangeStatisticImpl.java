@@ -57,7 +57,7 @@ public final class AverageRangeStatisticImpl extends StatisticImpl implements
 
     private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
     private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong lowWaterMark = new AtomicLong(Long.MIN_VALUE);
+    private AtomicLong lowWaterMark = new AtomicLong(Long.MAX_VALUE);
     private long                         numberOfSamples;
     private long                         runningTotal;
 
@@ -117,7 +117,7 @@ public final class AverageRangeStatisticImpl extends StatisticImpl implements
         super.reset();
         currentVal.set(Long.MIN_VALUE);
         highWaterMark.set(Long.MIN_VALUE);
-        lowWaterMark.set(Long.MIN_VALUE);
+        lowWaterMark.set(Long.MAX_VALUE);
         this.resetAverageStats();
     }
     
