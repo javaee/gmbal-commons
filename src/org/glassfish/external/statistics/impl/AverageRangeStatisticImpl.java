@@ -1,8 +1,8 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
+ *
  * Copyright 1997-2007 Sun Microsystems, Inc. All rights reserved.
- * 
+ *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
  * and Distribution License("CDDL") (collectively, the "License").  You
@@ -10,7 +10,7 @@
  * a copy of the License at https://glassfish.dev.java.net/public/CDDL+GPL.html
  * or glassfish/bootstrap/legal/LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
- * 
+ *
  * When distributing the software, include this License Header Notice in each
  * file and include the License file at glassfish/bootstrap/legal/LICENSE.txt.
  * Sun designates this particular file as subject to the "Classpath" exception
@@ -19,9 +19,9 @@
  * Header, with the fields enclosed by brackets [] replaced by your own
  * identifying information: "Portions Copyrighted [year]
  * [name of copyright owner]"
- * 
+ *
  * Contributor(s):
- * 
+ *
  * If you wish your version of this file to be governed by only the CDDL or
  * only the GPL Version 2, indicate your decision by adding "[Contributor]
  * elects to include this software in this distribution under the [CDDL or GPL
@@ -35,137 +35,147 @@
  */
 
 package org.glassfish.external.statistics.impl;
-import org.glassfish.external.statistics.BoundedRangeStatistic;
+
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.lang.reflect.*;
+import org.glassfish.external.statistics.AverageRangeStatistic;
 
-
-/** 
- * @author Sreenivas Munnangi
+/**
+ * An implementation of AverageRangeStatistic that provides ways to change the
+ * state externally through mutators.  Convenience class that is useful for
+ * components that gather the statistical data.
+ * By merely changing the count (which is a mandatory measurement), rest of the statistical
+ * information could be deduced.
  */
-public final class BoundedRangeStatisticImpl extends StatisticImpl 
-    implements BoundedRangeStatistic, InvocationHandler {
-    
-    private AtomicLong lowerBound = new AtomicLong(0L);
-    private AtomicLong upperBound = new AtomicLong(0L);
+
+public final class AverageRangeStatisticImpl extends StatisticImpl implements
+        AverageRangeStatistic, InvocationHandler {
+
+    /** DEFAULT_UPPER_BOUND is maximum value Long can attain */
+    public static final long DEFAULT_MAX_BOUND = java.lang.Long.MAX_VALUE;
+
     private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
     private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
     private AtomicLong lowWaterMark = new AtomicLong(Long.MIN_VALUE);
-    
-    private BoundedRangeStatistic bs = (BoundedRangeStatistic) Proxy.newProxyInstance(
-            BoundedRangeStatistic.class.getClassLoader(),
-            new Class[] { BoundedRangeStatistic.class },
+    private long                         numberOfSamples;
+    private long                         runningTotal;
+
+    private AverageRangeStatistic as = (AverageRangeStatistic) Proxy.newProxyInstance(
+            AverageRangeStatistic.class.getClassLoader(),
+            new Class[] { AverageRangeStatistic.class },
             this);
 
-    public String toString() {
-        return super.toString() + NEWLINE + 
-            "Current: " + getCurrent() + NEWLINE +
-            "LowWaterMark: " + getLowWaterMark() + NEWLINE +
-            "HighWaterMark: " + getHighWaterMark() + NEWLINE +
-            "LowerBound: " + getLowerBound() + NEWLINE +
-            "UpperBound: " + getUpperBound();
-    }
-
-
-    public BoundedRangeStatisticImpl(long curVal, long highMark, long lowMark,
-                                     long upper, long lower, String name,
-                                     String unit, String desc, long startTime,
-                                     long sampleTime) {
+    /**
+     * Constructs an mutable instance of AverageRangeStatisticImpl.
+     * @param curVal    The current value of this statistic
+     * @param highMark  The highest value of this statistic, since measurement
+     *                  started
+     * @param lowMark   The lowest value of this statistic, since measurement
+     *                  started
+     * @param name      The name of the statistic
+     * @param unit      The unit of measurement for this statistic
+     * @param desc      A brief description of the statistic
+     * @param startTime Time in milliseconds at which the measurement was started
+     * @param sampleTime Time at which the last measurement was done.
+     * @param numberOfSamples number of samples at present
+     * @param runningTotal running total of sampled data at present
+     **/
+    public AverageRangeStatisticImpl(long curVal, long highMark, long lowMark,
+                                     String name, String unit, String desc,
+                                     long startTime, long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
         currentVal.set(curVal);
         highWaterMark.set(highMark);
         lowWaterMark.set(lowMark);
-        upperBound.set(upper);
-        lowerBound.set(lower);
+        numberOfSamples = 0L;
+        runningTotal = 0L;
     }
-    
-    public synchronized BoundedRangeStatistic getStatistic() {
-        return bs;
+
+    public synchronized AverageRangeStatistic getStatistic() {
+        return as;
+    }
+
+    public String toString() {
+        return super.toString() + NEWLINE +
+            "Current: " + getCurrent() + NEWLINE +
+            "LowWaterMark: " + getLowWaterMark() + NEWLINE +
+            "HighWaterMark: " + getHighWaterMark() + NEWLINE +
+            "Average:" + getAverage();
     }
 
     public synchronized Map getStaticAsMap() {
         Map m = super.getStaticAsMap();
         m.put("current", getCurrent());
-        m.put("lowerbound", getLowerBound());
-        m.put("upperbound", getUpperBound());
         m.put("lowwatermark", getLowWaterMark());
         m.put("highwatermark", getHighWaterMark());
+        m.put("average", getAverage());
         return m;
     }
+    
+    public void reset() {
+        super.reset();
+        currentVal.set(Long.MIN_VALUE);
+        highWaterMark.set(Long.MIN_VALUE);
+        lowWaterMark.set(Long.MIN_VALUE);
+        this.resetAverageStats();
+    }
+    
+    private void resetAverageStats() {
+        numberOfSamples = 0L;
+        runningTotal = 0L;
+    }    
 
-    /** Changes the current value of the encapsulated BoundedRangeStatistic to the given value.
-     * 
-     * <ul>
-     *  <li> lastSampleTime is set to <b> current time in milliseconds. </b> </li>
-     *  <li> highWaterMark is accordingly adjusted. </li>
-     *  <li> lowWaterMark is accordingly adjusted. </li>
-     * </ul>
-     * In a real-time system with actual probes for measurement, the lastSampleTime
-     * could be different from the instant when this method is called, but that is deemed insignificant.
-     * @param count         long that represents the current value of the Statistic.
-     */
     public void setCount(long current) {
         this.currentVal.set(current);
         super.setLastSampleTime(System.currentTimeMillis());
         this.lowWaterMark.set((current < this.lowWaterMark.get()) ? (current) : (this.lowWaterMark.get()));
         this.highWaterMark.set((current > this.highWaterMark.get()) ? (current) : (this.highWaterMark.get()));
+        if(DEFAULT_MAX_BOUND - runningTotal < current) {
+            this.resetAverageStats();
+        }
+        numberOfSamples++;
+        runningTotal += current;
     }
-
+    
+    public long getAverage() {
+        if(numberOfSamples == 0) {
+            return -1;
+        } else {
+            return runningTotal / numberOfSamples;
+        }
+    }
+    
     public long getCurrent() {
         return currentVal.get();
     }
-    
     public void setCurrent(long curVal) {
         currentVal.set(curVal);
     }
+    
     public long getHighWaterMark() {
         return highWaterMark.get();
     }
-    
     public void setHighWaterMark(long highMark) {
         highWaterMark.set(highMark);
     }
-    public long getLowWaterMark() {
-        return lowWaterMark.get();
-    }
     
+    public long getLowWaterMark() {
+        long result = lowWaterMark.get();
+        if(result == DEFAULT_MAX_BOUND) {
+            result = 0L;
+        }
+        return result;
+    }
     public void setLowWaterMark(long lowMark) {
         lowWaterMark.set(lowMark);
     }
-    public long getLowerBound() {
-        return lowerBound.get();
-    }
-    
-    public void setLowerBound(long lower) {
-        lowerBound.set(lower);
-    }
-    /**
-     * Returns the highest possible value, that this statistic is permitted to attain.
-     */
-    public long getUpperBound() {
-        return upperBound.get();
-    }
-	
-    public void setUpperBound(long upper) {
-        upperBound.set(upper);
-    }
-
-    @Override
-    public void reset() {
-        super.reset();
-        lowerBound.set(0L);
-        upperBound.set(0L);
-        currentVal.set(Long.MIN_VALUE);
-        highWaterMark.set(Long.MIN_VALUE);
-        lowWaterMark.set(Long.MIN_VALUE);
-    }
 
     // todo: equals implementation
-    public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Object result;
         try {
-            result = m.invoke(this, args);
+            result = method.invoke(this, args);
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         } catch (Exception e) {
@@ -175,4 +185,5 @@ public final class BoundedRangeStatisticImpl extends StatisticImpl
         }
         return result;
     }
+    
 }

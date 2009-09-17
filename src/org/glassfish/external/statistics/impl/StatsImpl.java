@@ -35,73 +35,54 @@
  */
 
 package org.glassfish.external.statistics.impl;
-import org.glassfish.external.statistics.StringStatistic;
-import java.util.Map;
-import java.lang.reflect.*;
+import org.glassfish.external.statistics.Stats;
+import org.glassfish.external.statistics.Statistic;
+import java.io.Serializable;
+import java.util.ArrayList;
 
 /** 
- * @author Sreenivas Munnangi
+ * @author Jennifer Chou
  */
-public class StringStatisticImpl extends StatisticImpl
-    implements StringStatistic, InvocationHandler {
-    
-    private String str = null;
+public class StatsImpl implements Stats,Serializable {
 
-    private StringStatistic ss = (StringStatistic) Proxy.newProxyInstance(
-            StringStatistic.class.getClassLoader(),
-            new Class[] { StringStatistic.class },
-            this);
+    StatisticImpl[] statArray = null;
 
-    public StringStatisticImpl(String str, String name, String unit, 
-                              String desc, long sampleTime, long startTime) {
-        super(name, unit, desc, startTime, sampleTime);
-        this.str = str;
-    }
-    
-    public StringStatisticImpl(String name, String unit, String desc) {
-        super(name, unit, desc);
-    }
-    
-    public synchronized StringStatistic getStatistic() {
-        return ss;
+    protected StatsImpl(StatisticImpl[] statisticArray) {
+        statArray = statisticArray;
     }
 
-    public synchronized Map getStaticAsMap() {
-        Map m = super.getStaticAsMap();
-        m.put("current", getCurrent());
-        return m;
-    }
-
-    public String toString() {
-        return super.toString() + NEWLINE + "Current-value: " + getCurrent();
-    }
-
-    public String getCurrent() {
-        return str;
-    }
-
-    public void setCurrent(String str) {
-        this.str = str;
-    }
-
-    @Override
-    public void reset() {
-        super.reset();
-        this.str = null;
-    }
-
-    // todo: equals implementation
-    public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
-        Object result;
-        try {
-            result = m.invoke(this, args);
-        } catch (InvocationTargetException e) {
-            throw e.getTargetException();
-        } catch (Exception e) {
-            throw new RuntimeException("unexpected invocation exception: " +
-                       e.getMessage());
-        } finally {
+    public Statistic getStatistic(String statisticName) {
+        Statistic stat = null;
+        for (Statistic s : statArray) {
+            if (s.getName().equals(statisticName)) {
+                stat = s;
+                break;
+            }
         }
-        return result;
+        return stat;
     }
+
+    public String[] getStatisticNames() {
+        ArrayList list = new ArrayList();
+        for (Statistic s : statArray) {
+            list.add(s.getName());
+        }
+        String[] strArray = new String[list.size()];
+        return (String[])list.toArray(strArray);
+    }
+
+    public Statistic[] getStatistics() {
+        return this.statArray;
+    }
+
+    /**
+     * Call reset on all of the Statistic objects contained by this Stats object
+     */
+    public void reset() {
+        for (StatisticImpl s : statArray) {
+            s.reset();
+        }
+    };
+
+
 }

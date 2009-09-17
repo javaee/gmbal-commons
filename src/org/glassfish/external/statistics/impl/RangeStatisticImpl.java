@@ -105,6 +105,14 @@ public final class RangeStatisticImpl extends StatisticImpl
     public void setLowWaterMark(long lowMark) {
         lowWaterMark.set(lowMark);
     }
+
+    @Override
+    public void reset() {
+        super.reset();
+        currentVal.set(Long.MIN_VALUE);
+        highWaterMark.set(Long.MIN_VALUE);
+        lowWaterMark.set(Long.MIN_VALUE);
+    }
     
     public final String toString() {
         return super.toString() + NEWLINE + 

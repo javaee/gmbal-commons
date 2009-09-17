@@ -89,6 +89,29 @@ public class TimeStatisticImpl extends StatisticImpl
     }
 
     /**
+	 * Increments the count of operation execution by 1 and also increases the time
+	 * consumed. A successful execution of method will have all the data updated as:
+	 * <ul>
+	 * <li> count ++ </li>
+	 * <li> max time, min time and total time are accordingly adjusted </li>
+	 * </ul>
+	 * @param       current     long indicating time in whatever unit this statistic is calculated
+	 */
+	public void incrementCount(long current) {
+        if (count.get() == 0) {
+            totTime.set(current);
+            maxTime.set(current);
+            minTime.set(current);
+        } else {
+            totTime.addAndGet(current);
+            maxTime.set(current >= maxTime.get() ? current : maxTime.get());
+            minTime.set(current >= minTime.get() ? minTime.get() : current);
+        }
+		count.incrementAndGet();
+		super.setLastSampleTime(System.currentTimeMillis());
+	}
+
+    /**
      * Returns the number of times an operation was invoked 
      */
     public long getCount() {
@@ -133,6 +156,15 @@ public class TimeStatisticImpl extends StatisticImpl
 
     public void setTotalTime(long totalTime) {
         totTime.set(totalTime);
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        count.set(Long.MIN_VALUE);
+        maxTime.set(System.currentTimeMillis());
+        minTime.set(System.currentTimeMillis());
+        totTime.set(0L);
     }
 
     // todo: equals implementation

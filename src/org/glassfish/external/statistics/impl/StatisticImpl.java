@@ -125,6 +125,11 @@ public abstract class StatisticImpl implements Statistic,Serializable {
         startTime.set(start_time);
     }
 
+    public void reset() {
+        startTime.set(System.currentTimeMillis());
+        sampleTime.set(System.currentTimeMillis());
+    }
+
     public String toString() {
         return "Statistic " + getClass().getName() + NEWLINE +
             "Name: " + getName() + NEWLINE +

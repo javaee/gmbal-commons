@@ -89,6 +89,13 @@ public final class BoundaryStatisticImpl extends StatisticImpl
         upperBound.set(upper);
     }
 
+    @Override
+    public void reset() {
+        super.reset();
+        lowerBound.set(0L);
+        upperBound.set(0L);
+    }
+
     // todo: equals implementation
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         Object result;

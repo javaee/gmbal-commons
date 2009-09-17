@@ -101,6 +101,12 @@ public class CountStatisticImpl extends StatisticImpl
         count.decrementAndGet();
     }
 
+    @Override
+    public void reset() {
+        super.reset();
+        count.set(0);
+    }
+
     // todo: equals implementation
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         Object result;
