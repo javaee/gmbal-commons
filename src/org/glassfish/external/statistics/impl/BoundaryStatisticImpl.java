@@ -46,10 +46,11 @@ import java.lang.reflect.*;
 public final class BoundaryStatisticImpl extends StatisticImpl 
     implements BoundaryStatistic, InvocationHandler {
     
-    private AtomicLong lowerBound = new AtomicLong(0L);
-    private AtomicLong upperBound = new AtomicLong(0L);
+    private final long lowerBound;
+    private final long upperBound;
 	
-    private BoundaryStatistic bs = (BoundaryStatistic) Proxy.newProxyInstance(
+    private final BoundaryStatistic bs = 
+            (BoundaryStatistic) Proxy.newProxyInstance(
             BoundaryStatistic.class.getClassLoader(),
             new Class[] { BoundaryStatistic.class },
             this);
@@ -58,8 +59,8 @@ public final class BoundaryStatisticImpl extends StatisticImpl
                                  String unit, String desc, long startTime,
                                  long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        upperBound.set(upper);
-        lowerBound.set(lower);
+        upperBound = upper;
+        lowerBound = lower;
     }
 
     public synchronized BoundaryStatistic getStatistic() {
@@ -73,27 +74,18 @@ public final class BoundaryStatisticImpl extends StatisticImpl
         return m;
     }
 
-    public long getLowerBound() {
-        return lowerBound.get();
+    public synchronized long getLowerBound() {
+        return lowerBound;
     }
     
-    public void setLowerBound(long lower) {
-        lowerBound.set(lower);
-    }
-    
-    public long getUpperBound() {
-        return upperBound.get();
-    }
-
-    public void setUpperBound(long upper) {
-        upperBound.set(upper);
+    public synchronized long getUpperBound() {
+        return upperBound;
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         super.reset();
-        lowerBound.set(0L);
-        upperBound.set(0L);
+        sampleTime = -1L;
     }
 
     // todo: equals implementation

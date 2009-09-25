@@ -43,21 +43,25 @@ import java.lang.reflect.*;
 /** 
  * @author Sreenivas Munnangi
  */
-public class TimeStatisticImpl extends StatisticImpl 
+public final class TimeStatisticImpl extends StatisticImpl 
     implements TimeStatistic, InvocationHandler {
     
-    private AtomicLong count = new AtomicLong(Long.MIN_VALUE);
-    private final long timeNow = System.currentTimeMillis();
-    private AtomicLong maxTime = new AtomicLong(timeNow);
-    private AtomicLong minTime = new AtomicLong(timeNow);
-    private AtomicLong totTime = new AtomicLong(0L);
+    private long count = 0L;
+    private long maxTime = 0L;
+    private long minTime = 0L;
+    private long totTime = 0L;
+    private final long initCount;
+    private final long initMaxTime;
+    private final long initMinTime;
+    private final long initTotTime;
 
-    private TimeStatistic ts = (TimeStatistic) Proxy.newProxyInstance(
+    private final TimeStatistic ts = 
+            (TimeStatistic) Proxy.newProxyInstance(
             TimeStatistic.class.getClassLoader(),
             new Class[] { TimeStatistic.class },
             this);
 
-    public final String toString() {
+    public synchronized final String toString() {
         return super.toString() + NEWLINE + 
             "Count: " + getCount() + NEWLINE +
             "MinTime: " + getMinTime() + NEWLINE +
@@ -69,10 +73,14 @@ public class TimeStatisticImpl extends StatisticImpl
                              long totalTime, String name, String unit, 
                              String desc, long startTime, long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        count.set(counter);
-        maxTime.set(maximumTime);
-        minTime.set(minimumTime);
-        totTime.set(totalTime);
+        count = counter;
+        initCount = counter;
+        maxTime = maximumTime;
+        initMaxTime = maximumTime;
+        minTime = minimumTime;
+        initMinTime = minimumTime;
+        totTime = totalTime;
+        initTotTime = totalTime;
     }
 
     public synchronized TimeStatistic getStatistic() {
@@ -88,83 +96,59 @@ public class TimeStatisticImpl extends StatisticImpl
         return m;
     }
 
-    /**
-	 * Increments the count of operation execution by 1 and also increases the time
-	 * consumed. A successful execution of method will have all the data updated as:
-	 * <ul>
-	 * <li> count ++ </li>
-	 * <li> max time, min time and total time are accordingly adjusted </li>
-	 * </ul>
-	 * @param       current     long indicating time in whatever unit this statistic is calculated
-	 */
-	public void incrementCount(long current) {
-        if (count.get() == 0) {
-            totTime.set(current);
-            maxTime.set(current);
-            minTime.set(current);
+     public synchronized void incrementCount(long current) {
+        if (count == 0) {
+            totTime = current;
+            maxTime = current;
+            minTime = current;
         } else {
-            totTime.addAndGet(current);
-            maxTime.set(current >= maxTime.get() ? current : maxTime.get());
-            minTime.set(current >= minTime.get() ? minTime.get() : current);
+            totTime = totTime + current;
+            maxTime = (current >= maxTime ? current : maxTime);
+            minTime = (current >= minTime ? minTime : current);
         }
-		count.incrementAndGet();
-		super.setLastSampleTime(System.currentTimeMillis());
-	}
+        count++;
+        sampleTime = System.currentTimeMillis();
+     }
 
     /**
      * Returns the number of times an operation was invoked 
      */
-    public long getCount() {
-        return count.get();
-    }
-    
-    public void setCount(long counter) {
-        count.set(counter);
+    public synchronized long getCount() {
+        return count;
     }
     
     /**
      * Returns the maximum amount of time that it took for one invocation of an
      * operation, since measurement started.
      */
-    public long getMaxTime() {
-        return maxTime.get();
-    }
-    
-    public void setMaxTime(long maximumTime) {
-        maxTime.set(maximumTime);
+    public synchronized long getMaxTime() {
+        return maxTime;
     }
     
     /**
      * Returns the minimum amount of time that it took for one invocation of an
      * operation, since measurement started.
      */
-    public long getMinTime() {
-        return minTime.get();
+    public synchronized long getMinTime() {
+        return minTime;
     }    
 
-    public void setMinTime(long minimumTime) {
-        minTime.set(minimumTime);
-    }
-    
     /**
      * Returns the amount of time that it took for all invocations, 
      * since measurement started.
      */
-    public long getTotalTime() {
-        return totTime.get();
-    }
-
-    public void setTotalTime(long totalTime) {
-        totTime.set(totalTime);
+    public synchronized long getTotalTime() {
+        return totTime;
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         super.reset();
-        count.set(Long.MIN_VALUE);
-        maxTime.set(System.currentTimeMillis());
-        minTime.set(System.currentTimeMillis());
-        totTime.set(0L);
+        count = initCount;
+        maxTime = initMaxTime;
+        minTime = initMinTime;
+        totTime = initTotTime;
+        sampleTime = -1L;
     }
 
     // todo: equals implementation

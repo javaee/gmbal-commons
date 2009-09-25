@@ -44,44 +44,64 @@ import java.util.concurrent.ConcurrentHashMap;
 /** 
  * @author Sreenivas Munnangi
  */
-public abstract class StatisticImpl implements Statistic,Serializable {
+public abstract class StatisticImpl implements Statistic {
     
-    private String statisticDesc = "description";
-    private AtomicLong sampleTime = new AtomicLong(System.currentTimeMillis());
-    private String statisticName = "name";
-    private AtomicLong startTime = new AtomicLong(System.currentTimeMillis());
-    private String statisticUnit = "unit";
+    private final String statisticName;
+    private final String statisticUnit;
+    private final String statisticDesc;
+    protected long sampleTime = -1L;
+    private long startTime;
     public static final String UNIT_COUNT = "count";
     public static final String UNIT_SECOND = "second";
     public static final String UNIT_MILLISECOND = "millisecond";
     public static final String UNIT_MICROSECOND = "microsecond";
     public static final String UNIT_NANOSECOND = "nanosecond";
 
-    protected Map<String, Object> statMap = new ConcurrentHashMap<String, Object> ();
+    protected final Map<String, Object> statMap = new ConcurrentHashMap<String, Object> ();
     
     protected static final String NEWLINE = System.getProperty( "line.separator" );
 
     protected StatisticImpl(String name, String unit, String desc, 
                           long start_time, long sample_time) {
-        statisticName = name;
-        statisticUnit = unit;
-        statisticDesc = desc;
-        startTime.set(start_time);
-        sampleTime.set(sample_time);
+
+        if (isValidString(name)) {
+            statisticName = name;
+        } else {
+            statisticName = "name";
+        }
+
+        if (isValidString(unit)) {
+            statisticUnit = unit;
+        } else {
+            statisticUnit = "unit";
+        }
+
+        if (isValidString(desc)) {
+            statisticDesc = desc;
+        } else {
+            statisticDesc = "description";
+        }
+
+        startTime = start_time;
+        sampleTime = sample_time;
     }
 
     protected StatisticImpl(String name, String unit, String desc) {
-        statisticName = name;
-        statisticUnit = unit;
-        statisticDesc = desc;
+        this(name, unit, desc, System.currentTimeMillis(), System.currentTimeMillis());
     }
 
     public synchronized Map getStaticAsMap() {
-        statMap.put("name", statisticName);
-        statMap.put("unit", statisticUnit);
-        statMap.put("description", statisticDesc);
-        statMap.put("starttime", startTime.get());
-        statMap.put("lastsampletime", sampleTime.get());
+        if (isValidString(statisticName)) {
+            statMap.put("name", statisticName);
+        }
+        if (isValidString(statisticUnit)) {
+            statMap.put("unit", statisticUnit);
+        }
+        if (isValidString(statisticDesc)) {
+            statMap.put("description", statisticDesc);
+        }
+        statMap.put("starttime", startTime);
+        statMap.put("lastsampletime", sampleTime);
         return statMap;
     }
     
@@ -89,53 +109,36 @@ public abstract class StatisticImpl implements Statistic,Serializable {
         return this.statisticName;
     }
     
-    public synchronized void setName(String name) {
-        this.statisticName = name;
-    }
-
     public String getDescription() {
         return this.statisticDesc;
     }
     
-    public synchronized void setDescription(String desc) {
-        this.statisticDesc = desc;
-    }
-
     public String getUnit() {
         return this.statisticUnit;
     }
     
-    public synchronized void setUnit(String unit) {
-        this.statisticUnit = unit;
+    public synchronized long getLastSampleTime() {
+        return sampleTime;
     }
 
-    public long getLastSampleTime() {
-        return sampleTime.get();
-    }
-    
-    public void setLastSampleTime(long sample_time) {
-        sampleTime.set(sample_time);
+    public synchronized long getStartTime() {
+        return startTime;
     }
 
-    public long getStartTime() {
-        return startTime.get();
+    public synchronized void reset() {
+        startTime = System.currentTimeMillis();
     }
 
-    public void setStartTime(long start_time) {
-        startTime.set(start_time);
-    }
-
-    public void reset() {
-        startTime.set(System.currentTimeMillis());
-        sampleTime.set(System.currentTimeMillis());
-    }
-
-    public String toString() {
+    public synchronized String toString() {
         return "Statistic " + getClass().getName() + NEWLINE +
             "Name: " + getName() + NEWLINE +
             "Description: " + getDescription() + NEWLINE +
             "Unit: " + getUnit() + NEWLINE +
             "LastSampleTime: " + getLastSampleTime() + NEWLINE +
             "StartTime: " + getStartTime();
+    }
+
+    protected static boolean isValidString(String str) {
+        return (str!=null && str.length()>0);
     }
 }

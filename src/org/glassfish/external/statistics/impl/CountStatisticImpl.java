@@ -43,12 +43,14 @@ import java.lang.reflect.*;
 /** 
  * @author Sreenivas Munnangi
  */
-public class CountStatisticImpl extends StatisticImpl
+public final class CountStatisticImpl extends StatisticImpl
     implements CountStatistic, InvocationHandler {
     
-    private AtomicLong count = new AtomicLong();
+    private long count = 0L;
+    private final long initCount;
 
-    private CountStatistic cs = (CountStatistic) Proxy.newProxyInstance(
+    private final CountStatistic cs = 
+            (CountStatistic) Proxy.newProxyInstance(
             CountStatistic.class.getClassLoader(),
             new Class[] { CountStatistic.class },
             this);
@@ -56,17 +58,14 @@ public class CountStatisticImpl extends StatisticImpl
     public CountStatisticImpl(long countVal, String name, String unit, 
                               String desc, long sampleTime, long startTime) {
         super(name, unit, desc, startTime, sampleTime);
-        count.set(countVal); 
+        count = countVal;
+        initCount = countVal;
     }
     
     public CountStatisticImpl(String name, String unit, String desc) {
-        super(name, unit, desc);
+        this(0L, name, unit, desc, -1L, System.currentTimeMillis());
     }
 
-    public CountStatisticImpl(String name, String desc) {
-        super(name, "count", desc);
-    }
-    
     public synchronized CountStatistic getStatistic() {
         return cs;
     }
@@ -77,34 +76,39 @@ public class CountStatisticImpl extends StatisticImpl
         return m;
     }
 
-    public String toString() {
+    public synchronized String toString() {
         return super.toString() + NEWLINE + "Count: " + getCount();
     }
 
-    public long getCount() {
-        return count.get();
+    public synchronized long getCount() {
+        return count;
     }
 
-    public void setCount(long countVal) {
-        count.set(countVal);
+    public synchronized void setCount(long countVal) {
+        count = countVal;
+        sampleTime = System.currentTimeMillis();
     }
 
-    public void increment() {
-        count.incrementAndGet();
+    public synchronized void increment() {
+        count++;
+        sampleTime = System.currentTimeMillis();
     }
 
-    public void increment(long delta) {
-        count.addAndGet(delta);
+    public synchronized void increment(long delta) {
+        count = count + delta;
+        sampleTime = System.currentTimeMillis();
     }
 
-    public void decrement() {
-        count.decrementAndGet();
+    public synchronized void decrement() {
+        count--;
+        sampleTime = System.currentTimeMillis();
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         super.reset();
-        count.set(0);
+        count = initCount;
+        sampleTime = -1L;
     }
 
     // todo: equals implementation

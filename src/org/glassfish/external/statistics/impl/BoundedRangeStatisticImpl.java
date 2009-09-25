@@ -47,18 +47,25 @@ import java.lang.reflect.*;
 public final class BoundedRangeStatisticImpl extends StatisticImpl 
     implements BoundedRangeStatistic, InvocationHandler {
     
-    private AtomicLong lowerBound = new AtomicLong(0L);
-    private AtomicLong upperBound = new AtomicLong(0L);
-    private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong lowWaterMark = new AtomicLong(Long.MAX_VALUE);
+    private long lowerBound = 0L;
+    private long upperBound = 0L;
+    private long currentVal = 0L;
+    private long highWaterMark = Long.MIN_VALUE;
+    private long lowWaterMark = Long.MAX_VALUE;
     
-    private BoundedRangeStatistic bs = (BoundedRangeStatistic) Proxy.newProxyInstance(
+    private final long initLowerBound;
+    private final long initUpperBound;
+    private final long initCurrentVal;
+    private final long initHighWaterMark;
+    private final long initLowWaterMark;
+    
+    private final BoundedRangeStatistic bs = 
+            (BoundedRangeStatistic) Proxy.newProxyInstance(
             BoundedRangeStatistic.class.getClassLoader(),
             new Class[] { BoundedRangeStatistic.class },
             this);
 
-    public String toString() {
+    public synchronized String toString() {
         return super.toString() + NEWLINE + 
             "Current: " + getCurrent() + NEWLINE +
             "LowWaterMark: " + getLowWaterMark() + NEWLINE +
@@ -73,11 +80,16 @@ public final class BoundedRangeStatisticImpl extends StatisticImpl
                                      String unit, String desc, long startTime,
                                      long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        currentVal.set(curVal);
-        highWaterMark.set(highMark);
-        lowWaterMark.set(lowMark);
-        upperBound.set(upper);
-        lowerBound.set(lower);
+        currentVal = curVal;
+        initCurrentVal = curVal;
+        highWaterMark = highMark;
+        initHighWaterMark = highMark;
+        lowWaterMark = lowMark;
+        initLowWaterMark = lowMark;
+        upperBound = upper;
+        initUpperBound = upper;
+        lowerBound = lower;
+        initLowerBound = lower;
     }
     
     public synchronized BoundedRangeStatistic getStatistic() {
@@ -94,71 +106,50 @@ public final class BoundedRangeStatisticImpl extends StatisticImpl
         return m;
     }
 
-    /** Changes the current value of the encapsulated BoundedRangeStatistic to the given value.
-     * 
-     * <ul>
-     *  <li> lastSampleTime is set to <b> current time in milliseconds. </b> </li>
-     *  <li> highWaterMark is accordingly adjusted. </li>
-     *  <li> lowWaterMark is accordingly adjusted. </li>
-     * </ul>
-     * In a real-time system with actual probes for measurement, the lastSampleTime
-     * could be different from the instant when this method is called, but that is deemed insignificant.
-     * @param count         long that represents the current value of the Statistic.
-     */
-    public void setCount(long current) {
-        this.currentVal.set(current);
-        super.setLastSampleTime(System.currentTimeMillis());
-        this.lowWaterMark.set((current < this.lowWaterMark.get()) ? (current) : (this.lowWaterMark.get()));
-        this.highWaterMark.set((current > this.highWaterMark.get()) ? (current) : (this.highWaterMark.get()));
+    public synchronized long getCurrent() {
+        return currentVal;
+    }
+    
+    public synchronized void setCurrent(long curVal) {
+        currentVal = curVal;
+        lowWaterMark = (curVal >= lowWaterMark ? lowWaterMark : curVal);
+        highWaterMark = (curVal >= highWaterMark ? curVal : highWaterMark);
+        sampleTime = System.currentTimeMillis();
     }
 
-    public long getCurrent() {
-        return currentVal.get();
+    public synchronized long getHighWaterMark() {
+        return highWaterMark;
     }
     
-    public void setCurrent(long curVal) {
-        currentVal.set(curVal);
-    }
-    public long getHighWaterMark() {
-        return highWaterMark.get();
+    public synchronized void setHighWaterMark(long hwm) {
+        highWaterMark = hwm;
     }
     
-    public void setHighWaterMark(long highMark) {
-        highWaterMark.set(highMark);
-    }
-    public long getLowWaterMark() {
-        return lowWaterMark.get();
+    public synchronized long getLowWaterMark() {
+        return lowWaterMark;
     }
     
-    public void setLowWaterMark(long lowMark) {
-        lowWaterMark.set(lowMark);
-    }
-    public long getLowerBound() {
-        return lowerBound.get();
+    public synchronized void setLowWaterMark(long lwm) {
+        lowWaterMark = lwm;
     }
     
-    public void setLowerBound(long lower) {
-        lowerBound.set(lower);
+    public synchronized long getLowerBound() {
+        return lowerBound;
     }
-    /**
-     * Returns the highest possible value, that this statistic is permitted to attain.
-     */
-    public long getUpperBound() {
-        return upperBound.get();
+    
+    public synchronized long getUpperBound() {
+        return upperBound;
     }
 	
-    public void setUpperBound(long upper) {
-        upperBound.set(upper);
-    }
-
     @Override
-    public void reset() {
+    public synchronized void reset() {
         super.reset();
-        lowerBound.set(0L);
-        upperBound.set(0L);
-        currentVal.set(Long.MIN_VALUE);
-        highWaterMark.set(Long.MIN_VALUE);
-        lowWaterMark.set(Long.MAX_VALUE);
+        lowerBound = initLowerBound;
+        upperBound = initUpperBound;
+        currentVal = initCurrentVal;
+        highWaterMark = initHighWaterMark;
+        lowWaterMark = initLowWaterMark;
+        sampleTime = -1L;
     }
 
     // todo: equals implementation

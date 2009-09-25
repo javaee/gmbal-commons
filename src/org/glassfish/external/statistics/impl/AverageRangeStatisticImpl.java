@@ -52,51 +52,45 @@ import org.glassfish.external.statistics.AverageRangeStatistic;
 public final class AverageRangeStatisticImpl extends StatisticImpl implements
         AverageRangeStatistic, InvocationHandler {
 
-    /** DEFAULT_UPPER_BOUND is maximum value Long can attain */
-    public static final long DEFAULT_MAX_BOUND = java.lang.Long.MAX_VALUE;
+    private long currentVal = 0L;
+    private long highWaterMark = Long.MIN_VALUE;
+    private long lowWaterMark = Long.MAX_VALUE;
+    private long numberOfSamples = 0L;
+    private long runningTotal = 0L;
 
-    private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong lowWaterMark = new AtomicLong(Long.MAX_VALUE);
-    private long                         numberOfSamples;
-    private long                         runningTotal;
+    private final long initCurrentVal;
+    private final long initHighWaterMark;
+    private final long initLowWaterMark;
+    private final long initNumberOfSamples;
+    private final long initRunningTotal;
 
-    private AverageRangeStatistic as = (AverageRangeStatistic) Proxy.newProxyInstance(
+    private final AverageRangeStatistic as = 
+            (AverageRangeStatistic) Proxy.newProxyInstance(
             AverageRangeStatistic.class.getClassLoader(),
             new Class[] { AverageRangeStatistic.class },
             this);
 
-    /**
-     * Constructs an mutable instance of AverageRangeStatisticImpl.
-     * @param curVal    The current value of this statistic
-     * @param highMark  The highest value of this statistic, since measurement
-     *                  started
-     * @param lowMark   The lowest value of this statistic, since measurement
-     *                  started
-     * @param name      The name of the statistic
-     * @param unit      The unit of measurement for this statistic
-     * @param desc      A brief description of the statistic
-     * @param startTime Time in milliseconds at which the measurement was started
-     * @param sampleTime Time at which the last measurement was done.
-     * @param numberOfSamples number of samples at present
-     * @param runningTotal running total of sampled data at present
-     **/
     public AverageRangeStatisticImpl(long curVal, long highMark, long lowMark,
                                      String name, String unit, String desc,
                                      long startTime, long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        currentVal.set(curVal);
-        highWaterMark.set(highMark);
-        lowWaterMark.set(lowMark);
+        currentVal = curVal;
+        initCurrentVal = curVal;
+        highWaterMark = highMark;
+        initHighWaterMark = highMark;
+        lowWaterMark = lowMark;
+        initLowWaterMark = lowMark;
         numberOfSamples = 0L;
+        initNumberOfSamples = numberOfSamples;
         runningTotal = 0L;
+        initRunningTotal = runningTotal;
     }
 
     public synchronized AverageRangeStatistic getStatistic() {
         return as;
     }
 
-    public String toString() {
+    public synchronized String toString() {
         return super.toString() + NEWLINE +
             "Current: " + getCurrent() + NEWLINE +
             "LowWaterMark: " + getLowWaterMark() + NEWLINE +
@@ -113,32 +107,17 @@ public final class AverageRangeStatisticImpl extends StatisticImpl implements
         return m;
     }
     
-    public void reset() {
+    public synchronized void reset() {
         super.reset();
-        currentVal.set(Long.MIN_VALUE);
-        highWaterMark.set(Long.MIN_VALUE);
-        lowWaterMark.set(Long.MAX_VALUE);
-        this.resetAverageStats();
-    }
-    
-    private void resetAverageStats() {
-        numberOfSamples = 0L;
-        runningTotal = 0L;
+        currentVal = initCurrentVal;
+        highWaterMark = initHighWaterMark;
+        lowWaterMark = initLowWaterMark;
+        numberOfSamples = initNumberOfSamples;
+        runningTotal = initRunningTotal;
+        sampleTime = -1L;
     }    
 
-    public void setCount(long current) {
-        this.currentVal.set(current);
-        super.setLastSampleTime(System.currentTimeMillis());
-        this.lowWaterMark.set((current < this.lowWaterMark.get()) ? (current) : (this.lowWaterMark.get()));
-        this.highWaterMark.set((current > this.highWaterMark.get()) ? (current) : (this.highWaterMark.get()));
-        if(DEFAULT_MAX_BOUND - runningTotal < current) {
-            this.resetAverageStats();
-        }
-        numberOfSamples++;
-        runningTotal += current;
-    }
-    
-    public long getAverage() {
+    public synchronized long getAverage() {
         if(numberOfSamples == 0) {
             return -1;
         } else {
@@ -146,29 +125,25 @@ public final class AverageRangeStatisticImpl extends StatisticImpl implements
         }
     }
     
-    public long getCurrent() {
-        return currentVal.get();
+    public synchronized long getCurrent() {
+        return currentVal;
     }
-    public void setCurrent(long curVal) {
-        currentVal.set(curVal);
+
+    public synchronized void setCurrent(long curVal) {
+        currentVal = curVal;
+        lowWaterMark = (curVal >= lowWaterMark ? lowWaterMark : curVal);
+        highWaterMark = (curVal >= highWaterMark ? curVal : highWaterMark);
+        numberOfSamples++;
+        runningTotal += curVal;
+        sampleTime = System.currentTimeMillis();
     }
     
-    public long getHighWaterMark() {
-        return highWaterMark.get();
-    }
-    public void setHighWaterMark(long highMark) {
-        highWaterMark.set(highMark);
+    public synchronized long getHighWaterMark() {
+        return highWaterMark;
     }
     
-    public long getLowWaterMark() {
-        long result = lowWaterMark.get();
-        if(result == DEFAULT_MAX_BOUND) {
-            result = 0L;
-        }
-        return result;
-    }
-    public void setLowWaterMark(long lowMark) {
-        lowWaterMark.set(lowMark);
+    public synchronized long getLowWaterMark() {
+        return lowWaterMark;
     }
 
     // todo: equals implementation
