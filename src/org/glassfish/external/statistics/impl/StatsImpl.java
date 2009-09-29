@@ -43,15 +43,15 @@ import java.util.ArrayList;
 /** 
  * @author Jennifer Chou
  */
-public class StatsImpl implements Stats,Serializable {
+public final class StatsImpl implements Stats {
 
-    StatisticImpl[] statArray = null;
+    private final StatisticImpl[] statArray;
 
     protected StatsImpl(StatisticImpl[] statisticArray) {
         statArray = statisticArray;
     }
 
-    public Statistic getStatistic(String statisticName) {
+    public synchronized Statistic getStatistic(String statisticName) {
         Statistic stat = null;
         for (Statistic s : statArray) {
             if (s.getName().equals(statisticName)) {
@@ -62,7 +62,7 @@ public class StatsImpl implements Stats,Serializable {
         return stat;
     }
 
-    public String[] getStatisticNames() {
+    public synchronized String[] getStatisticNames() {
         ArrayList list = new ArrayList();
         for (Statistic s : statArray) {
             list.add(s.getName());
@@ -71,14 +71,14 @@ public class StatsImpl implements Stats,Serializable {
         return (String[])list.toArray(strArray);
     }
 
-    public Statistic[] getStatistics() {
+    public synchronized Statistic[] getStatistics() {
         return this.statArray;
     }
 
     /**
      * Call reset on all of the Statistic objects contained by this Stats object
      */
-    public void reset() {
+    public synchronized void reset() {
         for (StatisticImpl s : statArray) {
             s.reset();
         }

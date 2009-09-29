@@ -46,11 +46,15 @@ import java.lang.reflect.*;
 public final class RangeStatisticImpl extends StatisticImpl 
     implements RangeStatistic, InvocationHandler {
     
-    private AtomicLong currentVal = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong highWaterMark = new AtomicLong(Long.MIN_VALUE);
-    private AtomicLong lowWaterMark = new AtomicLong(Long.MAX_VALUE);
+    private long currentVal = 0L;
+    private long highWaterMark = Long.MIN_VALUE;
+    private long lowWaterMark = Long.MAX_VALUE;
+    private final long initCurrentVal;
+    private final long initHighWaterMark;
+    private final long initLowWaterMark;
 
-    private RangeStatistic rs = (RangeStatistic) Proxy.newProxyInstance(
+    private final RangeStatistic rs = 
+            (RangeStatistic) Proxy.newProxyInstance(
             RangeStatistic.class.getClassLoader(),
             new Class[] { RangeStatistic.class },
             this);
@@ -59,9 +63,12 @@ public final class RangeStatisticImpl extends StatisticImpl
                               String name, String unit, String desc, 
                               long startTime, long sampleTime) {
         super(name, unit, desc, startTime, sampleTime);
-        currentVal.set(curVal);
-        highWaterMark.set(highMark);
-        lowWaterMark.set(lowMark);
+        currentVal = curVal;
+        initCurrentVal = curVal;
+        highWaterMark = highMark;
+        initHighWaterMark = highMark;
+        lowWaterMark = lowMark;
+        initLowWaterMark = lowMark;
     }
 
     public synchronized RangeStatistic getStatistic() {
@@ -76,45 +83,49 @@ public final class RangeStatisticImpl extends StatisticImpl
         return m;
     }
 
-    public long getCurrent() {
-        return currentVal.get();
+    public synchronized long getCurrent() {
+        return currentVal;
     }
     
-    public void setCurrent(long curVal) {
-        currentVal.set(curVal);
+    public synchronized void setCurrent(long curVal) {
+        currentVal = curVal;
+        lowWaterMark = (curVal >= lowWaterMark ? lowWaterMark : curVal);
+        highWaterMark = (curVal >= highWaterMark ? curVal : highWaterMark);
+        sampleTime = System.currentTimeMillis();
     }
     
     /**
      * Returns the highest value of this statistic, since measurement started.
      */
-    public long getHighWaterMark() {
-        return highWaterMark.get();
+    public synchronized long getHighWaterMark() {
+        return highWaterMark;
     }
     
-    public void setHighWaterMark(long highMark) {
-        highWaterMark.set(highMark);
+    public synchronized void setHighWaterMark(long hwm) {
+        highWaterMark = hwm;
     }
     
     /**
      * Returns the lowest value of this statistic, since measurement started.
      */
-    public long getLowWaterMark() {
-        return lowWaterMark.get();
+    public synchronized long getLowWaterMark() {
+        return lowWaterMark;
     }
     
-    public void setLowWaterMark(long lowMark) {
-        lowWaterMark.set(lowMark);
+    public synchronized void setLowWaterMark(long lwm) {
+        lowWaterMark = lwm;
     }
-
+    
     @Override
-    public void reset() {
+    public synchronized void reset() {
         super.reset();
-        currentVal.set(Long.MIN_VALUE);
-        highWaterMark.set(Long.MIN_VALUE);
-        lowWaterMark.set(Long.MAX_VALUE);
+        currentVal = initCurrentVal;
+        highWaterMark = initHighWaterMark;
+        lowWaterMark = initLowWaterMark;
+        sampleTime = -1L;
     }
     
-    public final String toString() {
+    public synchronized String toString() {
         return super.toString() + NEWLINE + 
             "Current: " + getCurrent() + NEWLINE +
             "LowWaterMark: " + getLowWaterMark() + NEWLINE +

@@ -42,12 +42,14 @@ import java.lang.reflect.*;
 /** 
  * @author Sreenivas Munnangi
  */
-public class StringStatisticImpl extends StatisticImpl
+public final class StringStatisticImpl extends StatisticImpl
     implements StringStatistic, InvocationHandler {
     
-    private String str = null;
+    private volatile String str = null;
+    private final String initStr;
 
-    private StringStatistic ss = (StringStatistic) Proxy.newProxyInstance(
+    private final StringStatistic ss = 
+            (StringStatistic) Proxy.newProxyInstance(
             StringStatistic.class.getClassLoader(),
             new Class[] { StringStatistic.class },
             this);
@@ -56,10 +58,11 @@ public class StringStatisticImpl extends StatisticImpl
                               String desc, long sampleTime, long startTime) {
         super(name, unit, desc, startTime, sampleTime);
         this.str = str;
+        initStr = str;
     }
     
     public StringStatisticImpl(String name, String unit, String desc) {
-        super(name, unit, desc);
+        this("", name, unit, desc, System.currentTimeMillis(), System.currentTimeMillis());
     }
     
     public synchronized StringStatistic getStatistic() {
@@ -68,11 +71,13 @@ public class StringStatisticImpl extends StatisticImpl
 
     public synchronized Map getStaticAsMap() {
         Map m = super.getStaticAsMap();
-        m.put("current", getCurrent());
+        if (getCurrent() != null) {
+            m.put("current", getCurrent());
+        }
         return m;
     }
 
-    public String toString() {
+    public synchronized String toString() {
         return super.toString() + NEWLINE + "Current-value: " + getCurrent();
     }
 
@@ -82,12 +87,14 @@ public class StringStatisticImpl extends StatisticImpl
 
     public void setCurrent(String str) {
         this.str = str;
+        sampleTime = System.currentTimeMillis();
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         super.reset();
-        this.str = null;
+        this.str = initStr;
+        sampleTime = -1L;
     }
 
     // todo: equals implementation
