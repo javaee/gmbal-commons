@@ -108,6 +108,10 @@ public final class AMXGlassfish
         return newObjectName("/mon", "server-mon", serverName);
     }
     
+    /** ObjectName for top-level monitoring MBean for the DAS. */
+    public ObjectName serverMonForDAS() {
+        return serverMon( "server" ) ;
+    }
 
     /** Make a new AMX ObjectName with unchecked exception.
      *  name must be null to create a singleton ObjectName.

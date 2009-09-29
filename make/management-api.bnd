@@ -1,3 +1,2 @@
+-include bnd.properties
 Export-Package: org.glassfish.external.probe.provider.annotations,org.glassfish.external.probe.provider,org.glassfish.external.statistics,org.glassfish.external.statistics.impl,org.glassfish.external.statistics.annotations,org.glassfish.external.amx,org.glassfish.external.arc
-
-
