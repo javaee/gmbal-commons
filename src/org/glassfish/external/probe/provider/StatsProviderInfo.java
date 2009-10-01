@@ -41,10 +41,44 @@ package org.glassfish.external.probe.provider;
  *
  * @author abbagani
  */
-public interface StatsProviderManagerDelegate {
+public class StatsProviderInfo {
 
-   public void register(StatsProviderInfo spInfo);
-   public void unregister(Object statsProvider);
-   public boolean hasListeners(String probeStr);
+    public StatsProviderInfo(String configElement, PluginPoint pp,
+                                    String subTreeRoot, Object statsProvider){
+        this.configElement = configElement;
+        this.pp = pp;
+        this.subTreeRoot = subTreeRoot;
+        this.statsProvider = statsProvider;
+    }
 
-} 
+    private String configElement;
+    private PluginPoint pp;
+    private String subTreeRoot;
+    private Object statsProvider;
+    private String configLevelStr = null;
+
+    public String getConfigElement() {
+        return configElement;
+    }
+
+    public PluginPoint getPluginPoint() {
+        return pp;
+    }
+
+    public String getSubTreeRoot() {
+        return subTreeRoot;
+    }
+
+    public Object getStatsProvider() {
+        return statsProvider;
+    }
+
+    public String getConfigLevel() {
+        return configLevelStr;
+    }
+
+    public void setConfigLevel(String configLevelStr) {
+        this.configLevelStr = configLevelStr;
+    }
+
+}

@@ -56,6 +56,8 @@ public abstract class StatisticImpl implements Statistic {
     public static final String UNIT_MILLISECOND = "millisecond";
     public static final String UNIT_MICROSECOND = "microsecond";
     public static final String UNIT_NANOSECOND = "nanosecond";
+    public static final String START_TIME = "starttime";
+    public static final String LAST_SAMPLE_TIME = "lastsampletime";
 
     protected final Map<String, Object> statMap = new ConcurrentHashMap<String, Object> ();
     
@@ -100,8 +102,8 @@ public abstract class StatisticImpl implements Statistic {
         if (isValidString(statisticDesc)) {
             statMap.put("description", statisticDesc);
         }
-        statMap.put("starttime", startTime);
-        statMap.put("lastsampletime", sampleTime);
+        statMap.put(StatisticImpl.START_TIME, startTime);
+        statMap.put(StatisticImpl.LAST_SAMPLE_TIME, sampleTime);
         return statMap;
     }
     

@@ -49,28 +49,42 @@ public class StatsProviderManager {
    }
 
    
-   synchronized public static boolean register(String configElement, PluginPoint pp,
+   public static boolean register(String configElement, PluginPoint pp,
                                     String subTreeRoot, Object statsProvider) {
+        StatsProviderInfo spInfo =
+            new StatsProviderInfo(configElement, pp, subTreeRoot, statsProvider);
+
+        return registerStatsProvider(spInfo);
+   }
+
+   public static boolean register(String configElement, PluginPoint pp,
+                                    String subTreeRoot, Object statsProvider,
+                                    String configLevelStr) {
+        StatsProviderInfo spInfo =
+            new StatsProviderInfo(configElement, pp, subTreeRoot, statsProvider);
+        spInfo.setConfigLevel(configLevelStr);
+
+        return registerStatsProvider(spInfo);
+   }
+
+   private static boolean registerStatsProvider(StatsProviderInfo spInfo) {
       //Ideally want to start this in a thread, so we can reduce the startup time
       if (spmd == null) {
           //Make an entry into the toBeRegistered map
-          toBeRegistered.add(
-                  new StatsProviderRegistryElement(configElement, pp,
-                                    subTreeRoot, statsProvider));
+          toBeRegistered.add(spInfo);
       } else {
-          spmd.register(configElement, pp,subTreeRoot,statsProvider);
+          spmd.register(spInfo);
           return true;
       }
        return false;
    }
 
-
-   synchronized public static boolean unregister(Object statsProvider) {
+   public static boolean unregister(Object statsProvider) {
       //Unregister the statsProvider if the delegate is not null
       if (spmd == null) {
-          for (StatsProviderRegistryElement spre : toBeRegistered) {
-              if (spre.getStatsProvider() == statsProvider) {
-                  toBeRegistered.remove(spre);
+          for (StatsProviderInfo spInfo : toBeRegistered) {
+              if (spInfo.getStatsProvider() == statsProvider) {
+                  toBeRegistered.remove(spInfo);
                   break;
               }
           }
@@ -83,7 +97,7 @@ public class StatsProviderManager {
    }
 
 
-   synchronized public static boolean hasListeners(String probeStr) {
+   public static boolean hasListeners(String probeStr) {
       //See if the probe has any listeners registered
       if (spmd == null) {
           return false;
@@ -93,7 +107,7 @@ public class StatsProviderManager {
    }
 
 
-   synchronized public static void setStatsProviderManagerDelegate(
+   public static void setStatsProviderManagerDelegate(
                                     StatsProviderManagerDelegate lspmd) {
       //System.out.println("in StatsProviderManager.setStatsProviderManagerDelegate ***********");
       if (lspmd == null) {
@@ -107,9 +121,8 @@ public class StatsProviderManager {
       //System.out.println("Running through the toBeRegistered array to call register ***********");
 
       //First register the pending StatsProviderRegistryElements
-      for (StatsProviderRegistryElement spre : toBeRegistered) {
-          spmd.register(spre.configElement, spre.pp, spre.subTreeRoot,
-                        spre.statsProvider);
+      for (StatsProviderInfo spInfo : toBeRegistered) {
+          spmd.register(spInfo);
       }
 
       //Now that you registered the pending calls, Clear the toBeRegistered store
@@ -118,24 +131,5 @@ public class StatsProviderManager {
 
    //variables
    static StatsProviderManagerDelegate spmd; // populate this during our initilaization process
-   static Vector<StatsProviderRegistryElement> toBeRegistered = new Vector();
-   
-   private static class StatsProviderRegistryElement {
-       String configElement;
-       PluginPoint pp;
-       String subTreeRoot;
-       Object statsProvider;
-       public StatsProviderRegistryElement(String configElement, PluginPoint pp,
-                                    String subTreeRoot, Object statsProvider) {
-           this.configElement = configElement;
-           this.pp = pp;
-           this.subTreeRoot = subTreeRoot;
-           this.statsProvider = statsProvider;
-       }
-
-       public Object getStatsProvider() {
-           return statsProvider;
-       }
-   }
-
+   static Vector<StatsProviderInfo> toBeRegistered = new Vector();
 }
