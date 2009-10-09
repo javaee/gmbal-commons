@@ -61,6 +61,26 @@ public final class AMXGlassfish
         mJMXDomain = jmxDomain;
         mDomainRoot = newObjectName("", "domain-root", null);
     }
+    
+    
+    public static boolean runningInGlassfish()
+    {
+        // these properties must all exist as a check to verify that it's Glassfish V3
+        final String[] requiredProps = new String[] { "hk2.startup.context.root", "product.name"};
+        for( final String prop : requiredProps )
+        {
+            final Object value = System.getProperty(prop);
+            if ( value == null )
+            {
+                return false;
+            }
+        }
+        
+        final Object productName = System.getProperty("product.name");
+        return (productName instanceof String) && "GlassFish/v3".equalsIgnoreCase((String)productName);
+    }
+
+
 
     /** JMX domain used by AMX MBeans.
      * <p>
