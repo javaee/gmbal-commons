@@ -29,7 +29,7 @@
  * recipient has the option to distribute your version of this file under
  * either the CDDL, the GPL Version 2 or to extend the choice of license to
  * its licensees as provided above.  However, if you add GPL Version 2 code
- * and therefore, elected the GPL Version 2 license, then the option applies
+ * and therefore, elected the GPL Version 2 license, then the option appliesDo
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
@@ -65,21 +65,19 @@ public final class AMXGlassfish
     
     public static boolean runningInGlassfish()
     {
-        // these properties must all exist as a check to verify that it's Glassfish V3
-        final String[] requiredProps = new String[] { "hk2.startup.context.root", "product.name"};
+        // must all exist as a check to verify that it's Glassfish V3
+        final String[] requiredProps = new String[] { "com.sun.aas.configRoot" };
         for( final String prop : requiredProps )
         {
             final Object value = System.getProperty(prop);
+            //System.out.println( "runningInGlassfish: " + prop + " = " + value );
             if ( value == null )
             {
                 return false;
             }
         }
-        
-        final Object productName = System.getProperty("product.name");
-        return (productName instanceof String) && "GlassFish/v3".equalsIgnoreCase((String)productName);
+        return true;
     }
-
 
 
     /** JMX domain used by AMX MBeans.
