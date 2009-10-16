@@ -62,21 +62,12 @@ public final class AMXGlassfish
         mDomainRoot = newObjectName("", "domain-root", null);
     }
     
-    
-    public static boolean runningInGlassfish()
+    /** Return a version string, or null if not running in Glassfish */
+    public static String getGlassfishVersion()
     {
         // must all exist as a check to verify that it's Glassfish V3
-        final String[] requiredProps = new String[] { "com.sun.aas.configRoot" };
-        for( final String prop : requiredProps )
-        {
-            final Object value = System.getProperty(prop);
-            //System.out.println( "runningInGlassfish: " + prop + " = " + value );
-            if ( value == null )
-            {
-                return false;
-            }
-        }
-        return true;
+        final String version = System.getProperty( "glassfish.version" );
+        return version;
     }
 
 
