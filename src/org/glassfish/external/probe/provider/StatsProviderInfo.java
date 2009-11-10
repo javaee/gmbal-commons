@@ -45,10 +45,17 @@ public class StatsProviderInfo {
 
     public StatsProviderInfo(String configElement, PluginPoint pp,
                                     String subTreeRoot, Object statsProvider){
+        this(configElement, pp, subTreeRoot, statsProvider, null);
+    }
+
+    public StatsProviderInfo(String configElement, PluginPoint pp,
+                                    String subTreeRoot, Object statsProvider,
+                                    String invokerId){
         this.configElement = configElement;
         this.pp = pp;
         this.subTreeRoot = subTreeRoot;
         this.statsProvider = statsProvider;
+        this.invokerId = invokerId;
     }
 
     private String configElement;
@@ -56,6 +63,7 @@ public class StatsProviderInfo {
     private String subTreeRoot;
     private Object statsProvider;
     private String configLevelStr = null;
+    private final String invokerId;
 
     public String getConfigElement() {
         return configElement;
@@ -79,6 +87,10 @@ public class StatsProviderInfo {
 
     public void setConfigLevel(String configLevelStr) {
         this.configLevelStr = configLevelStr;
+    }
+
+    public String getInvokerId() {
+        return invokerId;
     }
 
 }

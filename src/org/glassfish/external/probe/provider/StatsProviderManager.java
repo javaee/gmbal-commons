@@ -51,8 +51,14 @@ public class StatsProviderManager {
    
    public static boolean register(String configElement, PluginPoint pp,
                                     String subTreeRoot, Object statsProvider) {
+        return (register(pp, configElement, subTreeRoot, statsProvider, null));
+   }
+
+   public static boolean register(PluginPoint pp, String configElement,
+                                  String subTreeRoot, Object statsProvider,
+                                  String invokerId) {
         StatsProviderInfo spInfo =
-            new StatsProviderInfo(configElement, pp, subTreeRoot, statsProvider);
+            new StatsProviderInfo(configElement, pp, subTreeRoot, statsProvider, invokerId);
 
         return registerStatsProvider(spInfo);
    }
@@ -60,8 +66,14 @@ public class StatsProviderManager {
    public static boolean register(String configElement, PluginPoint pp,
                                     String subTreeRoot, Object statsProvider,
                                     String configLevelStr) {
+        return(register(configElement, pp, subTreeRoot, statsProvider, configLevelStr, null));
+   }
+
+   public static boolean register(String configElement, PluginPoint pp,
+                                    String subTreeRoot, Object statsProvider,
+                                    String configLevelStr, String invokerId) {
         StatsProviderInfo spInfo =
-            new StatsProviderInfo(configElement, pp, subTreeRoot, statsProvider);
+            new StatsProviderInfo(configElement, pp, subTreeRoot, statsProvider, invokerId);
         spInfo.setConfigLevel(configLevelStr);
 
         return registerStatsProvider(spInfo);
