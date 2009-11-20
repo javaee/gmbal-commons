@@ -73,30 +73,28 @@
     -->
     <property file="build.properties"/>
 
-    <path id="maven.class.path"  path="lib/maven-ant-tasks-2.0.10.jar"/>
+    <path id="maven.class.path"  path="${local.maven.ant.tasks.jar}"/>
 
     <typedef resource="org/apache/maven/artifact/ant/antlib.xml" 
         uri="antlib:org.apache.maven.artifact.ant" 
         classpathref="maven.class.path">
     </typedef>
 
-    <target name="-post-jar">
-        <!-- make bundle here -->
+    <target name="mavenize" depends="project-init" description="initialize maven ">
+        <artifact:install-provider artifactId="wagon-svn" groupId="org.jvnet.wagon-svn" version="1.7">
+            <artifact:remoteRepository id="java.net.maven2.repository" url="http://download.java.net/maven/2/" />
+        </artifact:install-provider>
     </target>
 
     <target name="project-init">
         <property environment="env"/>
         <!-- initialize properties specific to making bundles and releasing them. -->
-        <property name="major.minor.update"             value="3.0.0"/>
-        <property name="build.version"                  value="b${build.int}"/>
-        <property name="version"                        value="${major.minor.update}-${build.version}"/>
         <property name="repo.url"                       value="java-net:/maven2-repository/trunk/repository"/>
-        <property name="file.url"                       value="file:/tmp/maven"/>
-        <property name="local.maven"                    value="${env.HOME}/.m2"/>
-        <property name="local.url"                      value="file:${local.maven}"/>
+        <property name="maven.local.repository"         value="file://${env.HOME}/.m2"/>
+        <property name="local.url"                      value="${maven.local.repository}"/>
         <property name="full.jar"                       value="dist/GlassFish_Common_APIs.jar"/>
-        <property name="groupId"                        value="org.glassfish.external"/>
-        <property name="artifactId"                     value="management-api"/>
+        <property name="groupId"                        value="${management-api.groupid}"/>
+        <property name="artifactId"                     value="${management-api.artifactid}"/>
     </target>
     
     <target name="clean">
@@ -104,11 +102,18 @@
         <delete file="make/temp.pom"/>
     </target>
 
+    <artifact:remoteRepository id="bnd.repo" url="${bnd.repository}"/> 
+
+    <artifact:dependencies pathId="bnd.classpath">
+        <remoteRepository refId="bnd.repo"/>
+        <dependency groupId="${bnd.groupid}" artifactId="${bnd.artifactid}" version="${bnd.version}" scope="compile"/>
+    </artifact:dependencies>
+
     <macrodef name="make-bundle">
         <attribute name="file"/>
             <sequential>
                 <mkdir dir="dist/bundles"/>
-                <java jar="lib/bnd.jar" fork="true" failonerror="true">
+                <java classpathref="bnd.classpath" classname="aQute.bnd.main.bnd" fork="true" failonerror="true">
                     <arg value="build"/>
                     <arg value="-classpath"/>
                     <arg value="${full.jar}"/>
@@ -130,7 +135,7 @@
 
     <target name="make-bnd-properties" depends="project-init">
         <delete file="make/bnd.properties"/>
-        <echo message="Bundle-Version: ${version}" file="make/bnd.properties"/>
+        <echo message="Bundle-Version: ${management-api.version}" file="make/bnd.properties"/>
     </target>
 
     <target name="make-bundles" depends="project-init,make-source-bundle,make-bnd-properties">
@@ -151,7 +156,7 @@
                 <filterchain>
                     <replacetokens>
                         <token key="artifactId" value="@{module}"/>
-                        <token key="version" value="${version}"/>
+                        <token key="version" value="${management-api.version}"/>
                         <token key="jarDescription" value="@{description}"/>
                         <token key="groupId" value="${groupId}"/>
                         <token key="repositoryUrl" value="${repo.url}"/>
@@ -161,7 +166,7 @@
             <copy file="make/@{module}.template.xml" tofile="make/temp.pom" overwrite="true">
                 <filterset>
                   <filter token="HEADER" value="${HEADER-@{module}}"/>
-                  <filter token="version" value="${version}"/>
+                  <filter token="version" value="${management-api.version}"/>
                   <filter token="groupId" value="${groupId}"/>
                 </filterset>
             </copy>
@@ -172,23 +177,16 @@
         <make-file module="${artifactId}" description="The GlassFish Common APIs for monitoring"/>
     </target>
 
-    <target name="mavenize" depends="project-init" description="initialize maven ">
-        <artifact:install-provider artifactId="wagon-svn" groupId="org.jvnet.wagon-svn" version="1.7">
-            <artifact:remoteRepository id="java.net.maven2.repository" url="http://download.java.net/maven/2/" />
-        </artifact:install-provider>
-    </target>
-
     <macrodef name="push-to-maven">
         <attribute name="module"/>
         <attribute name="description"/>
-        <attribute name="destination"/>
+        <attribute name="repo"/>
         <sequential>
             <make-file module="@{module}" description="@{description}"/>
 
             <artifact:pom id="pom.file" file="make/temp.pom" />
             <artifact:deploy file="dist/bundles/@{module}.jar">
-                <remoteRepository url="@{destination}">
-                </remoteRepository>
+                <remoteRepository url="@{repo}"/>
                 <pom refid="pom.file"/>
             </artifact:deploy>
             <delete file="make/temp.pom" verbose="true"/>
@@ -196,21 +194,21 @@
     </macrodef>
 
     <macrodef name="release-to-maven">
-        <attribute name="destination"/>
+        <attribute name="repo"/>
         <sequential>
-            <echo message="Releasing modules with version ${version} to @{destination}"/>
-            <push-to-maven destination="@{destination}" module="${artifactId}" 
+            <echo message="Releasing modules with version ${management-api.version} to @{repo}"/>
+            <push-to-maven repo="@{repo}" module="${artifactId}" 
                 description="GlassFish Common APIs"/>
-            <push-to-maven destination="@{destination}" module="${artifactId}-sources" 
+            <push-to-maven repo="@{repo}" module="${artifactId}-sources" 
                 description="GlassFish Common API source code"/>
         </sequential>
     </macrodef>
 
     <target name="release" depends="project-init, mavenize">
-        <release-to-maven destination="${repo.url}"/>
+        <release-to-maven repo="${repo.url}"/>
     </target>
 
     <target name="release-local" depends="project-init, mavenize">
-        <release-to-maven destination="${local.url}"/>
+        <release-to-maven repo="${local.url}"/>
     </target>
 </project>
