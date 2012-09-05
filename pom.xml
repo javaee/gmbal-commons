@@ -43,7 +43,7 @@
     <groupId>org.glassfish.external</groupId>
     <artifactId>management-api</artifactId>
     <packaging>jar</packaging>
-    <version>3.1.1-b001</version>
+    <version>3.3.1-b001</version>
     <name>management-api</name>
     <description>GlassFish Common APIs</description>
     <url>http://java.net/projects/gmbal</url>
