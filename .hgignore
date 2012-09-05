@@ -5,3 +5,4 @@ dist/**
 nbproject/private
 make/bnd.properties
 build.propertoes
+target/**
