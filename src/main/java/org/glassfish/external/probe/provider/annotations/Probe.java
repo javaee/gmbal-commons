@@ -1,7 +1,7 @@
 /* 
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *  
- *  Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *  
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -60,5 +60,8 @@ public @interface Probe {
     public boolean self() default false;
     public String providerName() default "";
     public String moduleName() default "";
-
+    public boolean stateful() default false;
+    public String profileNames() default "";
+    public boolean statefulReturn() default false;
+    public boolean statefulException() default false;
 }
