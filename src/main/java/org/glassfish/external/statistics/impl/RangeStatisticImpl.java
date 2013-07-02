@@ -1,7 +1,7 @@
 /* 
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *  
- *  Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2009-2013 Oracle and/or its affiliates. All rights reserved.
  *  
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -40,7 +40,6 @@
 
 package org.glassfish.external.statistics.impl;
 import org.glassfish.external.statistics.RangeStatistic;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.lang.reflect.*;
 
@@ -138,6 +137,8 @@ public final class RangeStatisticImpl extends StatisticImpl
 
     // todo: equals implementation
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
+        checkMethod(m);
+
         Object result;
         try {
             result = m.invoke(this, args);
@@ -146,7 +147,6 @@ public final class RangeStatisticImpl extends StatisticImpl
         } catch (Exception e) {
             throw new RuntimeException("unexpected invocation exception: " +
                        e.getMessage());
-        } finally {
         }
         return result;
     }
