@@ -40,7 +40,7 @@
 
 package org.glassfish.external.probe.provider;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  *
@@ -142,5 +142,5 @@ public class StatsProviderManager {
    }
 
    static StatsProviderManagerDelegate spmd; // populate this during our initilaization process
-   private static Vector<StatsProviderInfo> toBeRegistered = new Vector();
+   private static ArrayList<StatsProviderInfo> toBeRegistered = new ArrayList();
 }
