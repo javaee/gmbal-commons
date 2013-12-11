@@ -1,7 +1,7 @@
 /* 
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *  
- *  Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2009-2010,2013 Oracle and/or its affiliates. All rights reserved.
  *  
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -82,7 +82,7 @@ public class StatsProviderManager {
         return registerStatsProvider(spInfo);
    }
 
-   private static boolean registerStatsProvider(StatsProviderInfo spInfo) {
+   private synchronized static boolean registerStatsProvider(StatsProviderInfo spInfo) {
       //Ideally want to start this in a thread, so we can reduce the startup time
       if (spmd == null) {
           //Make an entry into the toBeRegistered map
@@ -94,7 +94,7 @@ public class StatsProviderManager {
        return false;
    }
 
-   public static boolean unregister(Object statsProvider) {
+   public synchronized static boolean unregister(Object statsProvider) {
       //Unregister the statsProvider if the delegate is not null
       if (spmd == null) {
           for (StatsProviderInfo spInfo : toBeRegistered) {
@@ -122,9 +122,8 @@ public class StatsProviderManager {
    }
 
 
-   public static void setStatsProviderManagerDelegate(
+   public synchronized static void setStatsProviderManagerDelegate(
                                     StatsProviderManagerDelegate lspmd) {
-      //System.out.println("in StatsProviderManager.setStatsProviderManagerDelegate ***********");
       if (lspmd == null) {
           //Should log and throw an exception
           return;
@@ -132,8 +131,6 @@ public class StatsProviderManager {
 
       //Assign the Delegate
       spmd = lspmd;
-
-      //System.out.println("Running through the toBeRegistered array to call register ***********");
 
       //First register the pending StatsProviderRegistryElements
       for (StatsProviderInfo spInfo : toBeRegistered) {
@@ -144,7 +141,6 @@ public class StatsProviderManager {
       toBeRegistered.clear();
    }
 
-   //variables
    static StatsProviderManagerDelegate spmd; // populate this during our initilaization process
-   static Vector<StatsProviderInfo> toBeRegistered = new Vector();
+   private static Vector<StatsProviderInfo> toBeRegistered = new Vector();
 }
