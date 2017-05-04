@@ -81,7 +81,14 @@
         <system>github</system>
         <url>https://github.com/javaee/gmbal-commons/issues/</url>
     </issueManagement>
-    
+
+    <distributionManagement>
+        <site>
+            <id>github</id>
+            <url>scm:git:https://github.com/javaee/gmbal-commons.git</url>
+        </site>
+    </distributionManagement>
+
     <mailingLists>
     </mailingLists>
     
