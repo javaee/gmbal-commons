@@ -75,7 +75,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/javaee/gmbal-commons.git</connection>
-        <developerConnection>scm:git:git@github.com/javaee/gmbal-commons.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:javaee/gmbal-commons.git</developerConnection>
         <url>https://github.com/javaee/gmbal-commons</url>
     </scm>
 
